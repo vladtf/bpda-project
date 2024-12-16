@@ -41,8 +41,6 @@ The voting web application includes the following components:
    - Voter authentication through unique access codes.
 Below is a revised version of the data flow that removes the separate second voter registration step and introduces a dispute resolution phase after the results are published.
 
-Below is a revised data flow incorporating the rated-based voting feature, which allows a single voter to vote for multiple candidates. Additionally, the voter registration has been streamlined to a single step, and a dispute resolution mechanism is included.
-
 ---
 
 ### Data Flow for Blockchain-Based Election App (Rated-Based Voting)
