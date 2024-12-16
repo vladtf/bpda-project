@@ -39,7 +39,6 @@ The voting web application includes the following components:
 4. **Security Measures**:
    - Encryption for data transmission.
    - Voter authentication through unique access codes.
-Below is a revised version of the data flow that removes the separate second voter registration step and introduces a dispute resolution phase after the results are published.
 
 ---
 
