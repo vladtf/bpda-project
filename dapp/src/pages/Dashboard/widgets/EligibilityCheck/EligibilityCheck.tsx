@@ -1,104 +1,44 @@
 import { useEffect, useState } from 'react';
-import { faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import moment from 'moment';
+import { API_URL } from 'config';
 import { Button } from 'components/Button';
-import { ContractAddress } from 'components/ContractAddress';
 import { Label } from 'components/Label';
 import { MissingNativeAuthError } from 'components/MissingNativeAuthError';
-import { OutputContainer, PingPongOutput } from 'components/OutputContainer';
-import { getCountdownSeconds, setTimeRemaining } from 'helpers';
-import { useGetPendingTransactions, useSendPingPongTransaction } from 'hooks';
 import { useGetLoginInfo } from 'hooks/sdkDappHooks';
-import { SessionEnum } from 'localConstants';
-import { SignedTransactionType, WidgetProps } from 'types';
-import {
-  useGetTimeToPong,
-  useGetPingTransaction,
-  useGetPongTransaction
-} from './hooks';
+import { WidgetProps } from 'types';
+import axios from 'axios';
+import { ContractAddress, OutputContainer } from 'components';
 
-// The transactions are being done by directly requesting to template-dapp service
 export const EligibilityCheck = ({ callbackRoute }: WidgetProps) => {
-  const [stateTransactions, setStateTransactions] = useState<
-    SignedTransactionType[] | null
-  >(null);
-  const [hasPing, setHasPing] = useState<boolean>(true);
-  const [secondsLeft, setSecondsLeft] = useState<number>(0);
+  const [fullName, setFullName] = useState<string>('John Doe');
+  const [birthdate, setBirthdate] = useState<string>('1990-01-01');
+  const [phoneNumber, setPhoneNumber] = useState<string>('1234567890');
+  const [eligibilityResult, setEligibilityResult] = useState<any>(null);
 
-  const {
-    sendPingTransactionFromService,
-    sendPongTransactionFromService,
-    transactionStatus
-  } = useSendPingPongTransaction({
-    type: SessionEnum.abiPingPongServiceSessionId
-  });
-  const getTimeToPong = useGetTimeToPong();
-  const getPingTransaction = useGetPingTransaction();
-  const getPongTransaction = useGetPongTransaction();
-  const { hasPendingTransactions } = useGetPendingTransactions();
   const { tokenLogin } = useGetLoginInfo();
 
-  const setSecondsRemaining = async () => {
-    if (!tokenLogin?.nativeAuthToken) {
-      return;
-    }
-
-    const secondsRemaining = await getTimeToPong();
-    const { canPing, timeRemaining } = setTimeRemaining(secondsRemaining);
-
-    setHasPing(canPing);
-    if (timeRemaining && timeRemaining >= 0) {
-      setSecondsLeft(timeRemaining);
+  const checkUserEligibility = async () => {
+    try {
+      const response = await axios.post('/eligibility_check', {
+        id_info: {
+          fullName,
+          birthdate,
+          phoneNumber
+        }
+      },
+        {
+          baseURL: API_URL
+        });
+      setEligibilityResult(response.data);
+      console.log('Eligibility response:', response.data);
+    } catch (error) {
+      console.error('Error checking eligibility:', error);
     }
   };
 
-  const onSendPingTransaction = async () => {
-    const pingTransaction = await getPingTransaction();
-
-    if (!pingTransaction) {
-      return;
-    }
-
-    await sendPingTransactionFromService({
-      transactions: [pingTransaction],
-      callbackRoute
-    });
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await checkUserEligibility();
   };
-
-  const onSendPongTransaction = async () => {
-    const pongTransaction = await getPongTransaction();
-
-    if (!pongTransaction) {
-      return;
-    }
-
-    await sendPongTransactionFromService({
-      transactions: [pongTransaction],
-      callbackRoute
-    });
-  };
-
-  const timeRemaining = moment()
-    .startOf('day')
-    .seconds(secondsLeft ?? 0)
-    .format('mm:ss');
-
-  const pongAllowed = secondsLeft === 0;
-
-  useEffect(() => {
-    getCountdownSeconds({ secondsLeft, setSecondsLeft });
-  }, [hasPing]);
-
-  useEffect(() => {
-    if (transactionStatus.transactions) {
-      setStateTransactions(transactionStatus.transactions);
-    }
-  }, [transactionStatus]);
-
-  useEffect(() => {
-    setSecondsRemaining();
-  }, [hasPendingTransactions]);
 
   if (!tokenLogin?.nativeAuthToken) {
     return <MissingNativeAuthError />;
@@ -106,48 +46,66 @@ export const EligibilityCheck = ({ callbackRoute }: WidgetProps) => {
 
   return (
     <div className='flex flex-col gap-6'>
-      <div className='flex flex-col gap-2'>
-        <div className='flex justify-start gap-2'>
-          <Button
-            disabled={!hasPing || hasPendingTransactions}
-            onClick={onSendPingTransaction}
-            data-testid='btnPingService'
-            data-cy='transactionBtn'
-          >
-            <FontAwesomeIcon icon={faArrowUp} className='mr-1' />
-            Ping
-          </Button>
-
-          <Button
-            disabled={!pongAllowed || hasPing || hasPendingTransactions}
-            data-testid='btnPongService'
-            data-cy='transactionBtn'
-            onClick={onSendPongTransaction}
-          >
-            <FontAwesomeIcon icon={faArrowDown} className='mr-1' />
-            Pong
-          </Button>
+      <form onSubmit={handleFormSubmit} className='flex flex-col gap-4 p-4 bg-white shadow-md rounded-md'>
+        <div className='flex flex-col gap-2'>
+          <Label className='font-semibold'>Full Name</Label>
+          <input
+            type='text'
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            required
+          />
         </div>
-      </div>
+        <div className='flex flex-col gap-2'>
+          <Label className='font-semibold'>Birthdate</Label>
+          <input
+            type='date'
+            value={birthdate}
+            onChange={(e) => setBirthdate(e.target.value)}
+            className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            required
+          />
+        </div>
+        <div className='flex flex-col gap-2'>
+          <Label className='font-semibold'>Phone Number</Label>
+          <input
+            type='tel'
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            required
+          />
+        </div>
+        <Button type='submit' data-testid='btnSubmitForm' className='mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600'>
+          Submit
+        </Button>
+      </form>
 
       <OutputContainer>
-        {!stateTransactions && (
-          <>
-            <ContractAddress />
-            {!pongAllowed && (
-              <p>
-                <Label>Time remaining: </Label>
-                <span className='text-red-600'>{timeRemaining}</span> until able
-                to pong
-              </p>
-            )}
-          </>
+        {eligibilityResult && (
+          <div className='rounded-md'>
+            <h3 className='font-semibold mb-2'>Eligibility Result</h3>
+            <div className='flex flex-col gap-2'>
+              <div>
+                <Label className='font-semibold'>Eligible:</Label>
+                <span className='ml-2'>{eligibilityResult.eligible ? 'Yes' : 'No'}</span>
+              </div>
+              {eligibilityResult.eligible && (
+                <>
+                  <div>
+                    <Label className='font-semibold'>Voter Address:</Label>
+                    <span className='ml-2'>{eligibilityResult.voter_address}</span>
+                  </div>
+                  <div>
+                    <Label className='font-semibold'>Token:</Label>
+                    <span className='ml-2'>{eligibilityResult.token}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         )}
-        <PingPongOutput
-          transactions={stateTransactions}
-          pongAllowed={pongAllowed}
-          timeRemaining={timeRemaining}
-        />
       </OutputContainer>
     </div>
   );
