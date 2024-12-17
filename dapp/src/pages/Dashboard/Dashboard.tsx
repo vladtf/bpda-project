@@ -7,7 +7,15 @@ import {
   NativeAuth,
   BatchTransactions,
   PingPongService,
-  Transactions
+  Transactions,
+  RegisterElection,
+  RegisterCandidate,
+  SignCandidate,
+  Vote,
+  EndElection,
+  Results,
+  Dispute,
+  ResolveDispute
 } from './widgets';
 import { useScrollToElement } from 'hooks';
 import { Widget } from './components';
@@ -28,6 +36,63 @@ const WIDGETS: WidgetType[] = [
       'Eligibility check for the connected account to interact with the Smart Contract',
     reference: 'https://github.com/multiversx/mx-ping-pong-service',
     anchor: 'ping-pong-backend'
+  },
+
+  {
+    title: 'Register Election',
+    widget: RegisterElection,
+    description: 'Register a new election',
+    reference: 'https://yourdocs.com/register-election',
+    anchor: 'register-election'
+  },
+  {
+    title: 'Register Candidate',
+    widget: RegisterCandidate,
+    description: 'Register a new candidate for an election',
+    reference: 'https://yourdocs.com/register-candidate',
+    anchor: 'register-candidate'
+  },
+  {
+    title: 'Sign Candidate',
+    widget: SignCandidate,
+    description: 'Sign a candidate for an election',
+    reference: 'https://yourdocs.com/sign-candidate',
+    anchor: 'sign-candidate'
+  },
+  {
+    title: 'Vote',
+    widget: Vote,
+    description: 'Cast your vote in an election',
+    reference: 'https://yourdocs.com/vote',
+    anchor: 'vote'
+  },
+  {
+    title: 'End Election',
+    widget: EndElection,
+    description: 'End an ongoing election',
+    reference: 'https://yourdocs.com/end-election',
+    anchor: 'end-election'
+  },
+  {
+    title: 'Results',
+    widget: Results,
+    description: 'View election results',
+    reference: 'https://yourdocs.com/results',
+    anchor: 'results'
+  },
+  {
+    title: 'Dispute',
+    widget: Dispute,
+    description: 'File a dispute for an election',
+    reference: 'https://yourdocs.com/dispute',
+    anchor: 'dispute'
+  },
+  {
+    title: 'Resolve Dispute',
+    widget: ResolveDispute,
+    description: 'Resolve an existing dispute',
+    reference: 'https://yourdocs.com/resolve-dispute',
+    anchor: 'resolve-dispute'
   },
   {
     title: 'Ping & Pong (ABI)',
