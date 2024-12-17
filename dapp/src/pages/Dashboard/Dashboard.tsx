@@ -91,10 +91,23 @@ export const Dashboard = () => {
 
   return (
     <AuthRedirectWrapper>
-      <div className='flex flex-col gap-6 max-w-3xl w-full'>
-        {WIDGETS.map((element) => (
-          <Widget key={element.title} {...element} />
-        ))}
+      <div className='flex justify-center'>
+        <div className='flex flex-col gap-6 max-w-3xl w-3/4'>
+          {WIDGETS.map((element) => (
+            <Widget key={element.title} {...element} />
+          ))}
+        </div>
+        <nav className='p-4 fixed right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-lg mr-4'>
+          <ul className='space-y-2 max-h-96 overflow-y-auto'>
+            {WIDGETS.map((element) => (
+              <li key={element.title} className='hover:bg-gray-200 p-2 rounded'>
+                <a href={`#${element.anchor || element.title.replace(/\s+/g, '-').toLowerCase()}`} className='text-blue-500 text-sm underline'>
+                  {element.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </AuthRedirectWrapper>
   );
