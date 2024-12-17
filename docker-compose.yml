@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  dapp:
+    build:
+      context: ./dapp
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend-sim
+
+  backend-sim:
+    build:
+      context: ./backend-sim
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
