@@ -6,13 +6,13 @@ import {
   SignMessage,
   NativeAuth,
   BatchTransactions,
-  PingPongRaw,
   PingPongService,
   Transactions
 } from './widgets';
 import { useScrollToElement } from 'hooks';
 import { Widget } from './components';
 import { WidgetType } from 'types/widget.types';
+import { EligibilityCheck } from './widgets/EligibilityCheck';
 
 const WIDGETS: WidgetType[] = [
   {
@@ -22,13 +22,12 @@ const WIDGETS: WidgetType[] = [
     reference: 'https://docs.multiversx.com/sdk-and-tools/sdk-dapp/#account'
   },
   {
-    title: 'Ping & Pong (Manual)',
-    widget: PingPongRaw,
+    title: 'Eligibility Check',
+    widget: EligibilityCheck,
     description:
-      'Smart Contract interactions using manually formulated transactions',
-    reference:
-      'https://docs.multiversx.com/sdk-and-tools/indices/es-index-transactions/',
-    anchor: 'ping-pong-manual'
+      'Eligibility check for the connected account to interact with the Smart Contract',
+    reference: 'https://github.com/multiversx/mx-ping-pong-service',
+    anchor: 'ping-pong-backend'
   },
   {
     title: 'Ping & Pong (ABI)',
