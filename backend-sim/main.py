@@ -86,12 +86,12 @@ disputes = {}
 
 @app.route('/eligibility_check', methods=['POST'])
 def eligibility_check():
-    # Input: { "id_info": { ... } }
+    # Input: { "id_info": { ... }, "voter_address": "..." }
     data = request.get_json()
+    voter_address = data.get("voter_address")
     # Simulate checking eligibility
     # For this mock, we just say everyone is eligible if data present
-    if data and "id_info" in data:
-        voter_address = f"erd_{uuid4().hex[:8]}"
+    if data and "id_info" in data and voter_address:
         voters[voter_address] = {"eligible": True, "token": "soulbound_token_example"}
         return jsonify({
             "eligible": True,
@@ -99,7 +99,7 @@ def eligibility_check():
             "token": "soulbound_token_example"
         }), 200
     else:
-        return jsonify({"eligible": False}), 400
+        return jsonify({"error": "Eligibility check failed"}), 400
 
 
 @app.route('/register_election', methods=['POST'])
@@ -318,7 +318,19 @@ def resolve_dispute():
 
 @app.route('/elections', methods=['GET'])
 def get_elections():
-    return jsonify({"elections": [{"id": eid, "name": edata["name"]} for eid, edata in elections.items()]}), 200
+    return jsonify({"elections": [
+        {
+            "id": eid,
+            "name": edata["name"],
+            "description": edata["description"],
+            "start_time": edata["start_time"],
+            "end_time": edata["end_time"],
+            "threshold": edata["threshold"],
+            "status": edata["status"],
+            "admin": edata["admin"],
+            "fee": edata.get("fee", 100)
+        } for eid, edata in elections.items()
+    ]}), 200
 
 @app.route('/candidates', methods=['GET'])
 def get_candidates():
@@ -326,9 +338,75 @@ def get_candidates():
     if not electionId or electionId not in elections:
         return jsonify({"error": "Invalid electionId"}), 404
 
-    return jsonify({"candidates": [{"id": cid, "name": cdata["name"]} for (eid, cid), cdata in candidates.items() if eid == electionId]}), 200
+    return jsonify({"candidates": [
+        {
+            "id": cid,
+            "name": cdata["name"],
+            "manifesto": cdata["manifesto"],
+            "sign_count": cdata["sign_count"],
+            "approved": cdata["approved"]
+        } for (eid, cid), cdata in candidates.items() if eid == electionId
+    ]}), 200
+
+
+@app.route('/validate_candidate', methods=['POST'])
+def validate_candidate():
+    # Input: { "electionId": "...", "candidateId": "..." }
+    data = request.get_json()
+    electionId = data.get("electionId")
+    candidateId = data.get("candidateId")
+
+    if (electionId, candidateId) not in candidates:
+        return jsonify({"error": "Invalid candidate"}), 404
+
+    candidate = candidates[(electionId, candidateId)]
+    if candidate["sign_count"] >= elections[electionId]["threshold"]:
+        candidate["approved"] = True
+        return jsonify({"status": "Candidate validated", "approved": True, "sign_count": candidate["sign_count"]}), 200
+    else:
+        return jsonify({"error": "Not enough signatures", "approved": False, "sign_count": candidate["sign_count"]}), 400
+
+
+def register_default_items():
+    # Register a default election
+    electionId = "election_default"
+    elections[electionId] = {
+        "name": "Default Election",
+        "description": "This is a default election for testing.",
+        "start_time": "2023-01-01T00:00:00Z",
+        "end_time": "2023-12-31T23:59:59Z",
+        "threshold": 1,
+        "admin": "admin_default",
+        "status": "ongoing"
+    }
+
+    # Register a default candidate
+    candidateId = "cand_default"
+    candidates[(electionId, candidateId)] = {
+        "name": "Default Candidate",
+        "manifesto": "This is a default candidate for testing.",
+        "fee_paid": True,
+        "sign_count": 0,
+        "approved": False,
+        "votes": []
+    }
+
+    # Register a default voter
+    voter_address = "voter_default"
+    voters[voter_address] = {"eligible": True, "token": "soulbound_token_example"}
+
+    # Register a default dispute
+    disputeId = "disp_default"
+    disputes[disputeId] = {
+        "electionId": electionId,
+        "reason": "Default dispute reason.",
+        "resolved": False,
+        "result_adjusted": False
+    }
 
 
 if __name__ == '__main__':
+    # Uncomment the line below to enable default items registration for testing
+    register_default_items()
     # Run the Flask app on http://127.0.0.1:5000
     app.run(debug=True, host='0.0.0.0', port=5000)
