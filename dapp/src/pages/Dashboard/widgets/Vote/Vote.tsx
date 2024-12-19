@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import axios from 'axios';
@@ -17,6 +16,36 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
   const [electionId, setElectionId] = useState<string>('');
   const [votes, setVotes] = useState<VoteOption[]>([{ candidateId: '', rating: 0 }]);
   const [response, setResponse] = useState<any>(null);
+  const [elections, setElections] = useState<any[]>([]);
+  const [candidates, setCandidates] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchElections = async () => {
+      try {
+        const res = await axios.get('/elections', { baseURL: API_URL });
+        setElections(res.data.elections);
+      } catch (error) {
+        console.error('Error fetching elections:', error);
+      }
+    };
+
+    fetchElections();
+  }, []);
+
+  useEffect(() => {
+    const fetchCandidates = async () => {
+      if (electionId) {
+        try {
+          const res = await axios.get(`/candidates?electionId=${electionId}`, { baseURL: API_URL });
+          setCandidates(res.data.candidates);
+        } catch (error) {
+          console.error('Error fetching candidates:', error);
+        }
+      }
+    };
+
+    fetchCandidates();
+  }, [electionId]);
 
   const handleVoteChange = (index: number, field: string, value: string | number) => {
     const newVotes = [...votes];
@@ -61,24 +90,36 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
         </div>
         <div className='flex flex-col gap-2'>
           <Label className='font-semibold'>Election ID</Label>
-          <input
-            type='text'
+          <select
             value={electionId}
             onChange={(e) => setElectionId(e.target.value)}
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
-          />
+          >
+            <option value=''>Select Election</option>
+            {elections.map((election) => (
+              <option key={election.id} value={election.id}>
+                {election.name}
+              </option>
+            ))}
+          </select>
         </div>
         {votes.map((vote, index) => (
           <div key={index} className='flex flex-col gap-2'>
             <Label className='font-semibold'>Candidate ID {index + 1}</Label>
-            <input
-              type='text'
+            <select
               value={vote.candidateId}
               onChange={(e) => handleVoteChange(index, 'candidateId', e.target.value)}
               className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
               required
-            />
+            >
+              <option value=''>Select Candidate</option>
+              {candidates.map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {candidate.name}
+                </option>
+              ))}
+            </select>
             <Label className='font-semibold'>Rating</Label>
             <input
               type='number'

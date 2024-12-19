@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import axios from 'axios';
@@ -13,6 +12,20 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
   const [manifesto, setManifesto] = useState<string>('');
   const [fee, setFee] = useState<string>('');
   const [response, setResponse] = useState<any>(null);
+  const [elections, setElections] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchElections = async () => {
+      try {
+        const res = await axios.get('/elections', { baseURL: API_URL });
+        setElections(res.data.elections);
+      } catch (error) {
+        console.error('Error fetching elections:', error);
+      }
+    };
+
+    fetchElections();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,13 +50,19 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
       <form onSubmit={handleSubmit} className='flex flex-col gap-4 p-4 bg-white shadow-md rounded-md'>
         <div className='flex flex-col gap-2'>
           <Label className='font-semibold'>Election ID</Label>
-          <input
-            type='text'
+          <select
             value={electionId}
             onChange={(e) => setElectionId(e.target.value)}
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
-          />
+          >
+            <option value=''>Select Election</option>
+            {elections.map((election) => (
+              <option key={election.id} value={election.id}>
+                {election.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className='flex flex-col gap-2'>
           <Label className='font-semibold'>Candidate Name</Label>

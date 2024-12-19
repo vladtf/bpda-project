@@ -310,6 +310,19 @@ def resolve_dispute():
     }), 200
 
 
+@app.route('/elections', methods=['GET'])
+def get_elections():
+    return jsonify({"elections": [{"id": eid, "name": edata["name"]} for eid, edata in elections.items()]}), 200
+
+@app.route('/candidates', methods=['GET'])
+def get_candidates():
+    electionId = request.args.get("electionId")
+    if not electionId or electionId not in elections:
+        return jsonify({"error": "Invalid electionId"}), 404
+
+    return jsonify({"candidates": [{"id": cid, "name": cdata["name"]} for (eid, cid), cdata in candidates.items() if eid == electionId]}), 200
+
+
 if __name__ == '__main__':
     # Run the Flask app on http://127.0.0.1:5000
     app.run(debug=True, host='0.0.0.0', port=5000)
