@@ -10,6 +10,7 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
   const [electionId, setElectionId] = useState<string>('');
   const [results, setResults] = useState<any>(null);
   const [elections, setElections] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchElections = async () => {
@@ -26,6 +27,7 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
 
   const fetchResults = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null); // Reset error state
     try {
       const res = await axios.get('/results', {
         params: { electionId },
@@ -33,8 +35,9 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
       });
       setResults(res.data);
       console.log('Election results:', res.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching results:', error);
+      setError(error.response?.data?.error || 'Failed to fetch results. Please try again.');
     }
   };
 
@@ -66,6 +69,12 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
           <div className='rounded-md'>
             <h3 className='font-semibold mb-2'>Election Results</h3>
             <pre>{JSON.stringify(results, null, 2)}</pre>
+          </div>
+        )}
+        {error && (
+          <div className='rounded-md text-red-500'>
+            <h3 className='font-semibold mb-2'>Error</h3>
+            <p>{error}</p>
           </div>
         )}
       </OutputContainer>

@@ -10,10 +10,11 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
   const [electionId, setElectionId] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [manifesto, setManifesto] = useState<string>('');
-  const [fee, setFee] = useState<string>('');
+  const [feePaid, setFeePaid] = useState<boolean>(false);
   const [response, setResponse] = useState<any>(null);
   const [elections, setElections] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [electionFee, setElectionFee] = useState<string>('');
 
   useEffect(() => {
     const fetchElections = async () => {
@@ -28,21 +29,29 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
     fetchElections();
   }, []);
 
+  useEffect(() => {
+    const selectedElection = elections.find((election) => election.id === electionId);
+    if (selectedElection) {
+      setElectionFee(selectedElection.fee);
+    }
+  }, [electionId, elections]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null); // Reset error state
     try {
       const res = await axios.post('/register_candidate', {
         electionId,
         name,
         manifesto,
-        fee
+        fee_paid: feePaid
       }, {
         baseURL: API_URL
       });
       setResponse(res.data);
       setError(null);
       console.log('Candidate registered:', res.data);
-    } catch (error) {
+    } catch (error: any) {
       setError(error.response?.data?.message || 'Error registering candidate');
       console.error('Error registering candidate:', error);
     }
@@ -86,15 +95,18 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
             required
           />
         </div>
-        <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Fee</Label>
+        <div className='flex items-center gap-2'>
           <input
-            type='text'
-            value={fee}
-            onChange={(e) => setFee(e.target.value)}
+            type='checkbox'
+            id='feePaid'
+            checked={feePaid}
+            onChange={(e) => setFeePaid(e.target.checked)}
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
           />
+          <Label className='font-semibold cursor-pointer'>
+            I agree to pay the fee of {electionFee}
+          </Label>
         </div>
         <Button type='submit' className='mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600'>
           Register Candidate
@@ -110,7 +122,7 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
         {error && (
           <div className='rounded-md text-red-500'>
             <h3 className='font-semibold mb-2'>Error</h3>
-            <pre>{error}</pre>
+            <p>{error}</p>
           </div>
         )}
       </OutputContainer>

@@ -15,7 +15,8 @@ import {
   EndElection,
   Results,
   Dispute,
-  ResolveDispute
+  ResolveDispute,
+  ValidateCandidate
 } from './widgets';
 import { useScrollToElement } from 'hooks';
 import { Widget } from './components';
@@ -58,6 +59,13 @@ const WIDGETS: WidgetType[] = [
     description: 'Sign a candidate for an election',
     reference: 'https://yourdocs.com/sign-candidate',
     anchor: 'sign-candidate'
+  },
+  {
+    title: 'Validate Candidate',
+    widget: ValidateCandidate,
+    description: 'Validate a candidate based on voter signatures',
+    reference: 'https://yourdocs.com/validate-candidate',
+    anchor: 'validate-candidate'
   },
   {
     title: 'Vote',

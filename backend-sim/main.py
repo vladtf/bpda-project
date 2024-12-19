@@ -254,6 +254,8 @@ def results():
     if not electionId or electionId not in elections:
         return jsonify({"error": "Invalid electionId"}), 404
 
+    election = elections[electionId]
+
     # Compute tallies from candidate votes
     tally = []
     for (eId, cId), cData in candidates.items():
@@ -270,7 +272,17 @@ def results():
 
     # Sort by total_rating descending
     tally.sort(key=lambda x: x["total_rating"], reverse=True)
-    return jsonify({"results": tally}), 200
+    return jsonify({
+        "election": {
+            "id": electionId,
+            "name": election["name"],
+            "description": election["description"],
+            "start_time": election["start_time"],
+            "end_time": election["end_time"],
+            "status": election["status"]
+        },
+        "results": tally
+    }), 200
 
 
 @app.route('/dispute', methods=['POST'])

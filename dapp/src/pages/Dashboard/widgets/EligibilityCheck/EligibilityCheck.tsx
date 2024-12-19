@@ -3,7 +3,7 @@ import { API_URL } from 'config';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import { MissingNativeAuthError } from 'components/MissingNativeAuthError';
-import { useGetLoginInfo } from 'hooks/sdkDappHooks';
+import { useGetLoginInfo, useGetAccountInfo } from 'hooks/sdkDappHooks';
 import { WidgetProps } from 'types';
 import axios from 'axios';
 import { ContractAddress, OutputContainer } from 'components';
@@ -13,25 +13,30 @@ export const EligibilityCheck = ({ callbackRoute }: WidgetProps) => {
   const [birthdate, setBirthdate] = useState<string>('1990-01-01');
   const [phoneNumber, setPhoneNumber] = useState<string>('1234567890');
   const [eligibilityResult, setEligibilityResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const { tokenLogin } = useGetLoginInfo();
+  const { address: voterAddress } = useGetAccountInfo();
 
   const checkUserEligibility = async () => {
+    setError(null); // Reset error state
     try {
       const response = await axios.post('/eligibility_check', {
         id_info: {
           fullName,
           birthdate,
           phoneNumber
-        }
+        },
+        voter_address: voterAddress
       },
         {
           baseURL: API_URL
         });
       setEligibilityResult(response.data);
       console.log('Eligibility response:', response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking eligibility:', error);
+      setError(error.response?.data?.error || 'Failed to check eligibility. Please try again.');
     }
   };
 
@@ -86,24 +91,13 @@ export const EligibilityCheck = ({ callbackRoute }: WidgetProps) => {
         {eligibilityResult && (
           <div className='rounded-md'>
             <h3 className='font-semibold mb-2'>Eligibility Result</h3>
-            <div className='flex flex-col gap-2'>
-              <div>
-                <Label className='font-semibold'>Eligible:</Label>
-                <span className='ml-2'>{eligibilityResult.eligible ? 'Yes' : 'No'}</span>
-              </div>
-              {eligibilityResult.eligible && (
-                <>
-                  <div>
-                    <Label className='font-semibold'>Voter Address:</Label>
-                    <span className='ml-2'>{eligibilityResult.voter_address}</span>
-                  </div>
-                  <div>
-                    <Label className='font-semibold'>Token:</Label>
-                    <span className='ml-2'>{eligibilityResult.token}</span>
-                  </div>
-                </>
-              )}
-            </div>
+            <pre>{JSON.stringify(eligibilityResult, null, 2)}</pre>
+          </div>
+        )}
+        {error && (
+          <div className='rounded-md text-red-500'>
+            <h3 className='font-semibold mb-2'>Error</h3>
+            <p>{error}</p>
           </div>
         )}
       </OutputContainer>
