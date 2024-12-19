@@ -13,6 +13,7 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
   const [fee, setFee] = useState<string>('');
   const [response, setResponse] = useState<any>(null);
   const [elections, setElections] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchElections = async () => {
@@ -39,8 +40,10 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
         baseURL: API_URL
       });
       setResponse(res.data);
+      setError(null);
       console.log('Candidate registered:', res.data);
     } catch (error) {
+      setError(error.response?.data?.message || 'Error registering candidate');
       console.error('Error registering candidate:', error);
     }
   };
@@ -102,6 +105,12 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
           <div className='rounded-md'>
             <h3 className='font-semibold mb-2'>Response</h3>
             <pre>{JSON.stringify(response, null, 2)}</pre>
+          </div>
+        )}
+        {error && (
+          <div className='rounded-md text-red-500'>
+            <h3 className='font-semibold mb-2'>Error</h3>
+            <pre>{error}</pre>
           </div>
         )}
       </OutputContainer>

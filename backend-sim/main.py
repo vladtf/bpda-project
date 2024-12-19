@@ -140,12 +140,18 @@ def register_candidate():
     # }
     data = request.get_json()
     electionId = data.get("electionId")
+    candidateName = data.get("name")
+
     if electionId not in elections:
         return jsonify({"error": "Invalid electionId"}), 404
 
+    # Check if candidate already registered
+    if any(cdata["name"] == candidateName for (eid, cid), cdata in candidates.items() if eid == electionId):
+        return jsonify({"error": "Candidate already registered"}), 400
+
     candidateId = f"cand_{uuid4().hex[:6]}"
     candidates[(electionId, candidateId)] = {
-        "name": data.get("name"),
+        "name": candidateName,
         "manifesto": data.get("manifesto"),
         "fee_paid": True,
         "sign_count": 0,
