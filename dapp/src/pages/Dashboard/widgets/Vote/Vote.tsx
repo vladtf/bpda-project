@@ -20,6 +20,8 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
   const [elections, setElections] = useState<any[]>([]);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [includeValidated, setIncludeValidated] = useState<boolean>(true);
+  const [hideNonValidated, setHideNonValidated] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchElections = async () => {
@@ -96,29 +98,40 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
             ))}
           </select>
         </div>
-        {candidates.map((candidate) => (
-          <div key={candidate.id} className='flex flex-col gap-2'>
-            <Label className='font-semibold'>{candidate.name}</Label>
-            <div className='flex items-center gap-2'>
-              <input
-                type='checkbox'
-                onChange={(e) => handleVoteChange(candidate.id, e.target.checked ? 1 : 0)}
-                className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-                disabled={!candidate.approved}
-              />
-              <span className='text-gray-700'>{candidate.name} ({candidate.approved ? 'Validated' : 'Not Validated'})</span>
+        <div className='flex items-center gap-2'>
+          <input
+            type='checkbox'
+            checked={hideNonValidated}
+            onChange={(e) => setHideNonValidated(e.target.checked)}
+            className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+          />
+          <Label className='font-semibold'>Hide Non-Validated Candidates</Label>
+        </div>
+        {candidates
+          .filter(candidate => !hideNonValidated || candidate.approved)
+          .map((candidate) => (
+            <div key={candidate.id} className='flex flex-col gap-2'>
+              <Label className='font-semibold'>{candidate.name}</Label>
+              <div className='flex items-center gap-2'>
+                <input
+                  type='checkbox'
+                  onChange={(e) => handleVoteChange(candidate.id, e.target.checked ? 1 : 0)}
+                  className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  disabled={!candidate.approved}
+                />
+                <span className='text-gray-700'>{candidate.name} ({candidate.approved ? 'Validated' : 'Not Validated'})</span>
+              </div>
+              {votes.find(vote => vote.candidateId === candidate.id) && (
+                <input
+                  type='number'
+                  value={votes.find(vote => vote.candidateId === candidate.id)?.rating || 0}
+                  onChange={(e) => handleVoteChange(candidate.id, Number(e.target.value))}
+                  className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  required
+                />
+              )}
             </div>
-            {votes.find(vote => vote.candidateId === candidate.id) && (
-              <input
-                type='number'
-                value={votes.find(vote => vote.candidateId === candidate.id)?.rating || 0}
-                onChange={(e) => handleVoteChange(candidate.id, Number(e.target.value))}
-                className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-                required
-              />
-            )}
-          </div>
-        ))}
+          ))}
         <Button type='submit' className='mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600'>
           Submit Vote
         </Button>
