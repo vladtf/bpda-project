@@ -16,7 +16,8 @@ import {
   Results,
   Dispute,
   ResolveDispute,
-  ValidateCandidate
+  ValidateCandidate,
+  Explorer // Add this import
 } from './widgets';
 import { useScrollToElement } from 'hooks';
 import { Widget } from './components';
@@ -122,6 +123,15 @@ const WIDGETS: WidgetType[] = [
     anchor: 'resolve-dispute',
     role: 'admin',
     step: 5
+  },
+  {
+    title: 'Explorer',
+    widget: Explorer,
+    description: 'Explore all items from the mocked database',
+    reference: 'https://yourdocs.com/explorer',
+    anchor: 'explorer',
+    role: 'admin',
+    step: 6
   },
   // {
   //   title: 'Ping & Pong (ABI)',

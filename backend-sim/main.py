@@ -347,7 +347,21 @@ def get_elections():
 @app.route('/candidates', methods=['GET'])
 def get_candidates():
     electionId = request.args.get("electionId")
-    if not electionId or electionId not in elections:
+
+    # Return all candidates if no electionId specified
+    if not electionId:
+        return jsonify({"candidates": [
+            {
+                "id": cid,
+                "electionId": eid,
+                "name": cdata["name"],
+                "manifesto": cdata["manifesto"],
+                "sign_count": cdata["sign_count"],
+                "approved": cdata["approved"]
+            } for (eid, cid), cdata in candidates.items()
+        ]}), 200
+
+    if electionId not in elections:
         return jsonify({"error": "Invalid electionId"}), 404
 
     return jsonify({"candidates": [
@@ -377,6 +391,29 @@ def validate_candidate():
         return jsonify({"status": "Candidate validated", "approved": True, "sign_count": candidate["sign_count"]}), 200
     else:
         return jsonify({"error": "Not enough signatures", "approved": False, "sign_count": candidate["sign_count"]}), 400
+
+
+@app.route('/voters', methods=['GET'])
+def get_voters():
+    return jsonify({"voters": [
+        {
+            "address": addr,
+            "eligible": vdata["eligible"],
+            "token": vdata["token"]
+        } for addr, vdata in voters.items()
+    ]}), 200
+
+@app.route('/disputes', methods=['GET'])
+def get_disputes():
+    return jsonify({"disputes": [
+        {
+            "id": did,
+            "electionId": ddata["electionId"],
+            "reason": ddata["reason"],
+            "resolved": ddata["resolved"],
+            "result_adjusted": ddata["result_adjusted"]
+        } for did, ddata in disputes.items()
+    ]}), 200
 
 
 def register_default_items():

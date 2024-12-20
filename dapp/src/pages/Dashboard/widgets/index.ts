@@ -14,3 +14,4 @@ export * from './Results/Results';
 export * from './Dispute/Dispute';
 export * from './ResolveDispute/ResolveDispute';
 export * from './ValidateCandidate/ValidateCandidate';
+export * from './Explorer/Explorer';
