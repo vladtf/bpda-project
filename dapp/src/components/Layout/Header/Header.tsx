@@ -2,7 +2,7 @@ import { Button } from 'components/Button';
 import { MxLink } from 'components/MxLink';
 import { environment } from 'config';
 import { logout } from 'helpers';
-import { useGetIsLoggedIn } from 'hooks';
+import { useGetIsLoggedIn, useGetAccountInfo } from 'hooks';
 import { RouteNamesEnum } from 'localConstants';
 import MultiversXLogo from '../../../assets/img/multiversx-logo.svg?react';
 import { useMatch } from 'react-router-dom';
@@ -27,6 +27,7 @@ const options = {
 
 export const Header = () => {
   const isLoggedIn = useGetIsLoggedIn();
+  const { address } = useGetAccountInfo();
   const isUnlockRoute = Boolean(useMatch(RouteNamesEnum.unlock));
 
   const ConnectButton = isUnlockRoute ? null : (
@@ -46,6 +47,9 @@ export const Header = () => {
     );
   };
 
+  const shortAddress = `${address.slice(0, 10)}...${address.slice(-10)}`;
+  const accountUrl = `https://explorer.multiversx.com/accounts/${address}`;
+
   return (
     <header className='flex flex-row align-center justify-between pl-6 pr-6 pt-6'>
       <MxLink
@@ -61,6 +65,19 @@ export const Header = () => {
             <div className='w-2 h-2 rounded-full bg-green-500' />
             <p className='text-gray-600'>{environment}</p>
           </div>
+
+          {isLoggedIn && (
+            <div className='flex items-center gap-2'>
+              <a
+                href={accountUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-gray-600 truncate'
+              >
+                {shortAddress}
+              </a>
+            </div>
+          )}
 
           {isLoggedIn ? (
             <Button

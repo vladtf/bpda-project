@@ -26,14 +26,6 @@ import { EligibilityCheck } from './widgets/EligibilityCheck';
 
 const WIDGETS: WidgetType[] = [
   {
-    title: 'Account (Connected)',
-    widget: Account,
-    description: 'Connected account details',
-    reference: 'https://docs.multiversx.com/sdk-and-tools/sdk-dapp/#account',
-    role: 'admin',
-    step: 0
-  },
-  {
     title: 'Eligibility Check',
     widget: EligibilityCheck,
     description:
