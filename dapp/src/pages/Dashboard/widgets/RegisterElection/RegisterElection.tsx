@@ -5,14 +5,15 @@ import axios from 'axios';
 import { API_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
+import { useGetAccountInfo } from 'hooks';
 
 export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
+  const { address: currentAccountAddress } = useGetAccountInfo();
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
   const [threshold, setThreshold] = useState<number>(10);
-  const [admin, setAdmin] = useState<string>('');
   const [fee, setFee] = useState<string>('');
   const [response, setResponse] = useState<any>(null);
 
@@ -25,7 +26,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
         start_time: startTime,
         end_time: endTime,
         threshold,
-        admin,
+        admin: currentAccountAddress,
         fee
       }, {
         baseURL: API_URL
@@ -49,7 +50,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
     <div className='flex flex-col gap-6'>
       <form onSubmit={handleSubmit} className='flex flex-col gap-4 p-4 bg-white shadow-md rounded-md'>
         <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Election Name</Label>
+          <Label>Election Name</Label>
           <input
             type='text'
             value={name}
@@ -59,7 +60,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
           />
         </div>
         <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Description</Label>
+          <Label>Description</Label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -68,7 +69,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
           />
         </div>
         <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Start Time</Label>
+          <Label>Start Time</Label>
           <input
             type='datetime-local'
             value={startTime}
@@ -78,7 +79,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
           />
         </div>
         <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>End Time</Label>
+          <Label>End Time</Label>
           <input
             type='datetime-local'
             value={endTime}
@@ -107,7 +108,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
           </Button>
         </div>
         <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Threshold</Label>
+          <Label>Threshold</Label>
           <input
             type='number'
             value={threshold}
@@ -117,17 +118,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
           />
         </div>
         <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Admin Address</Label>
-          <input
-            type='text'
-            value={admin}
-            onChange={(e) => setAdmin(e.target.value)}
-            className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-            required
-          />
-        </div>
-        <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Fee</Label>
+          <Label>Fee</Label>
           <input
             type='text'
             value={fee}
