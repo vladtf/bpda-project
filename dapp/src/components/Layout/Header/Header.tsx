@@ -48,7 +48,7 @@ export const Header = () => {
   };
 
   const shortAddress = `${address.slice(0, 10)}...${address.slice(-10)}`;
-  const accountUrl = `https://explorer.multiversx.com/accounts/${address}`;
+  const accountUrl = `https://${environment}-explorer.multiversx.com/accounts/${address}`;
 
   return (
     <header className='flex flex-row align-center justify-between pl-6 pr-6 pt-6'>
