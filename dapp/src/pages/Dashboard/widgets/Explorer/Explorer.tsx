@@ -36,7 +36,7 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
 
   return (
     <div className='flex flex-col gap-6'>
-      <OutputContainer>
+      <OutputContainer className='max-h-96 overflow-y-auto' isLoading={!elections.length}>
         {error && (
           <div className='rounded-md text-red-500'>
             <h3 className='font-semibold mb-2'>Error</h3>
