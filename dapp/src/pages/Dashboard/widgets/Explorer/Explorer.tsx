@@ -43,7 +43,7 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
       <button onClick={fetchData} className='self-end px-4 py-2 bg-blue-500 text-white rounded-md'>
         Refresh
       </button>
-      <OutputContainer className='max-h-96 overflow-y-auto' isLoading={isLoading}>
+      <OutputContainer className='max-h-192 overflow-y-auto' isLoading={isLoading}>
         {error && (
           <div className='rounded-md text-red-500'>
             <h3 className='font-semibold mb-2'>Error</h3>

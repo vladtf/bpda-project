@@ -137,7 +137,7 @@ export const Dashboard = () => {
           ))}
         </div>
         <nav className='p-4 fixed right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-lg mr-4'>
-          <ul className='space-y-2 max-h-96 overflow-y-auto'>
+          <ul className='space-y-2 max-h-192 overflow-y-auto'>
             {WIDGETS.map((element) => (
               <li key={element.title} className='hover:bg-gray-200 p-2 rounded'>
                 <a href={`#${element.anchor || element.title.replace(/\s+/g, '-').toLowerCase()}`} className='text-blue-500 text-sm underline'>

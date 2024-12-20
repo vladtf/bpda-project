@@ -177,6 +177,8 @@ def vote():
     for v_obj in votes_input:
         candidateId = v_obj["candidateId"]
         rating = v_obj["rating"]
+        if rating < 0 or rating > 10:
+            return jsonify({"error": "Invalid rating value, must be between 0 and 10"}), 400
         if (electionId, candidateId) not in candidates:
             continue
         # Prevent double voting for the same candidate by the same voter
