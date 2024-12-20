@@ -10,33 +10,40 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
   const [voters, setVoters] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [electionsRes, candidatesRes, votersRes, disputesRes] = await Promise.all([
+        axios.get('/elections', { baseURL: API_URL }),
+        axios.get('/candidates', { baseURL: API_URL }),
+        axios.get('/voters', { baseURL: API_URL }),
+        axios.get('/disputes', { baseURL: API_URL })
+      ]);
+
+      setElections(electionsRes.data.elections);
+      setCandidates(candidatesRes.data.candidates);
+      setVoters(votersRes.data.voters);
+      setDisputes(disputesRes.data.disputes);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError('Failed to fetch data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [electionsRes, candidatesRes, votersRes, disputesRes] = await Promise.all([
-          axios.get('/elections', { baseURL: API_URL }),
-          axios.get('/candidates', { baseURL: API_URL }),
-          axios.get('/voters', { baseURL: API_URL }),
-          axios.get('/disputes', { baseURL: API_URL })
-        ]);
-
-        setElections(electionsRes.data.elections);
-        setCandidates(candidatesRes.data.candidates);
-        setVoters(votersRes.data.voters);
-        setDisputes(disputesRes.data.disputes);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setError('Failed to fetch data. Please try again.');
-      }
-    };
-
     fetchData();
   }, []);
 
   return (
     <div className='flex flex-col gap-6'>
-      <OutputContainer className='max-h-96 overflow-y-auto' isLoading={!elections.length}>
+      <button onClick={fetchData} className='self-end px-4 py-2 bg-blue-500 text-white rounded-md'>
+        Refresh
+      </button>
+      <OutputContainer className='max-h-96 overflow-y-auto' isLoading={isLoading}>
         {error && (
           <div className='rounded-md text-red-500'>
             <h3 className='font-semibold mb-2'>Error</h3>
