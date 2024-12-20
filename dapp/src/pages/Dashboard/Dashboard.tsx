@@ -28,7 +28,9 @@ const WIDGETS: WidgetType[] = [
     title: 'Account (Connected)',
     widget: Account,
     description: 'Connected account details',
-    reference: 'https://docs.multiversx.com/sdk-and-tools/sdk-dapp/#account'
+    reference: 'https://docs.multiversx.com/sdk-and-tools/sdk-dapp/#account',
+    role: 'admin',
+    step: 0
   },
   {
     title: 'Eligibility Check',
@@ -36,71 +38,90 @@ const WIDGETS: WidgetType[] = [
     description:
       'Eligibility check for the connected account to interact with the Smart Contract',
     reference: 'https://github.com/multiversx/mx-ping-pong-service',
-    anchor: 'ping-pong-backend'
+    anchor: 'ping-pong-backend',
+    role: 'voter',
+    step: 1
   },
-
   {
     title: 'Register Election',
     widget: RegisterElection,
     description: 'Register a new election',
     reference: 'https://yourdocs.com/register-election',
-    anchor: 'register-election'
+    anchor: 'register-election',
+    role: 'admin',
+    step: 1
   },
   {
     title: 'Register Candidate',
     widget: RegisterCandidate,
     description: 'Register a new candidate for an election',
     reference: 'https://yourdocs.com/register-candidate',
-    anchor: 'register-candidate'
+    anchor: 'register-candidate',
+    role: 'admin',
+    step: 2
   },
   {
     title: 'Sign Candidate',
     widget: SignCandidate,
     description: 'Sign a candidate for an election',
     reference: 'https://yourdocs.com/sign-candidate',
-    anchor: 'sign-candidate'
+    anchor: 'sign-candidate',
+    role: 'voter',
+    step: 2
   },
   {
     title: 'Validate Candidate',
     widget: ValidateCandidate,
     description: 'Validate a candidate based on voter signatures',
     reference: 'https://yourdocs.com/validate-candidate',
-    anchor: 'validate-candidate'
+    anchor: 'validate-candidate',
+    role: 'admin',
+    step: 3
   },
   {
     title: 'Vote',
     widget: Vote,
     description: 'Cast your vote in an election',
     reference: 'https://yourdocs.com/vote',
-    anchor: 'vote'
+    anchor: 'vote',
+    role: 'voter',
+    step: 3
   },
   {
     title: 'End Election',
     widget: EndElection,
     description: 'End an ongoing election',
     reference: 'https://yourdocs.com/end-election',
-    anchor: 'end-election'
+    anchor: 'end-election',
+    role: 'admin',
+    step: 4
   },
   {
     title: 'Results',
     widget: Results,
     description: 'View election results',
     reference: 'https://yourdocs.com/results',
-    anchor: 'results'
+    anchor: 'results',
+    role: 'voter',
+    step: 4
   },
   {
     title: 'Dispute',
     widget: Dispute,
     description: 'File a dispute for an election',
     reference: 'https://yourdocs.com/dispute',
-    anchor: 'dispute'
+    anchor: 'dispute',
+    role: 'voter',
+    step: 5
   },
   {
     title: 'Resolve Dispute',
     widget: ResolveDispute,
     description: 'Resolve an existing dispute',
     reference: 'https://yourdocs.com/resolve-dispute',
-    anchor: 'resolve-dispute'
+    anchor: 'resolve-dispute',
+    role: 'admin',
+    step: 5
   },
   // {
   //   title: 'Ping & Pong (ABI)',
@@ -167,7 +188,12 @@ export const Dashboard = () => {
       <div className='flex justify-center'>
         <div className='flex flex-col gap-6 max-w-3xl w-full p-4'>
           {WIDGETS.map((element) => (
-            <Widget key={element.title} {...element} />
+            <div key={element.title}>
+              <div className='text-gray-500 text-sm'>
+                Role: {element.role}, Step: {element.step}
+              </div>
+              <Widget {...element} />
+            </div>
           ))}
         </div>
         <nav className='p-4 fixed right-0 top-1/2 transform -translate-y-1/2 bg-white shadow-lg rounded-lg mr-4'>

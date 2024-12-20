@@ -9,4 +9,6 @@ export type WidgetType<T = any> = {
   props?: { receiver?: string };
   reference: string;
   anchor?: string;
+  role: 'admin' | 'voter';
+  step: number;
 };
