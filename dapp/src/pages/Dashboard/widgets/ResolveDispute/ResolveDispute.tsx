@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import axios from 'axios';
@@ -11,9 +10,27 @@ export const ResolveDispute = ({ callbackRoute }: WidgetProps) => {
   const [disputeId, setDisputeId] = useState<string>('');
   const [valid, setValid] = useState<boolean>(false);
   const [response, setResponse] = useState<any>(null);
+  const [disputes, setDisputes] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedDispute, setSelectedDispute] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchDisputes = async () => {
+      try {
+        const res = await axios.get('/disputes', { baseURL: API_URL });
+        setDisputes(res.data.disputes);
+      } catch (error) {
+        console.error('Error fetching disputes:', error);
+        setError(error.response?.data?.error || 'Failed to fetch disputes. Please try again.');
+      }
+    };
+
+    fetchDisputes();
+  }, []);
 
   const handleResolve = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null); // Reset error state
     try {
       const res = await axios.post('/resolve_dispute', {
         disputeId,
@@ -21,9 +38,17 @@ export const ResolveDispute = ({ callbackRoute }: WidgetProps) => {
       }, { baseURL: API_URL });
       setResponse(res.data);
       console.log('Dispute resolved:', res.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error resolving dispute:', error);
+      setError(error.response?.data?.error || 'Failed to resolve dispute. Please try again.');
     }
+  };
+
+  const handleDisputeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    setDisputeId(selectedId);
+    const dispute = disputes.find(d => d.id === selectedId);
+    setSelectedDispute(dispute);
   };
 
   return (
@@ -31,13 +56,19 @@ export const ResolveDispute = ({ callbackRoute }: WidgetProps) => {
       <form onSubmit={handleResolve} className='flex flex-col gap-4 p-4 bg-white shadow-md rounded-md'>
         <div className='flex flex-col gap-2'>
           <Label className='font-semibold'>Dispute ID</Label>
-          <input
-            type='text'
+          <select
             value={disputeId}
-            onChange={(e) => setDisputeId(e.target.value)}
+            onChange={handleDisputeChange}
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
-          />
+          >
+            <option value=''>Select Dispute</option>
+            {disputes.map((dispute) => (
+              <option key={dispute.id} value={dispute.id}>
+                {dispute.id}
+              </option>
+            ))}
+          </select>
         </div>
         <div className='flex items-center gap-2'>
           <Label className='font-semibold'>Is the dispute valid?</Label>
@@ -52,11 +83,25 @@ export const ResolveDispute = ({ callbackRoute }: WidgetProps) => {
           Resolve Dispute
         </Button>
       </form>
+      {selectedDispute && (
+        <div className='mt-4 p-4 bg-gray-100 rounded-md'>
+          <h4 className='font-semibold'>Dispute Details</h4>
+          <p><strong>Reason:</strong> {selectedDispute.reason}</p>
+          <p><strong>Resolved:</strong> {selectedDispute.resolved ? 'Yes' : 'No'}</p>
+          <p><strong>Result Adjusted:</strong> {selectedDispute.result_adjusted ? 'Yes' : 'No'}</p>
+        </div>
+      )}
       <OutputContainer>
         {response && (
           <div className='rounded-md'>
             <h3 className='font-semibold mb-2'>Response</h3>
             <pre>{JSON.stringify(response, null, 2)}</pre>
+          </div>
+        )}
+        {error && (
+          <div className='rounded-md text-red-500'>
+            <h3 className='font-semibold mb-2'>Error</h3>
+            <p>{error}</p>
           </div>
         )}
       </OutputContainer>

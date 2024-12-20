@@ -5,11 +5,15 @@ import axios from 'axios';
 import { API_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
+import { useGetAccountInfo } from 'hooks';
 
 export const EndElection = ({ callbackRoute }: WidgetProps) => {
   const [electionId, setElectionId] = useState<string>('');
   const [response, setResponse] = useState<any>(null);
   const [elections, setElections] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const { address: adminAddress } = useGetAccountInfo();
+  const [selectedElection, setSelectedElection] = useState<any>(null);
 
   useEffect(() => {
     const fetchElections = async () => {
@@ -26,12 +30,27 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
 
   const handleEndElection = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null); // Reset error state
     try {
-      const res = await axios.post('/end_election', { electionId }, { baseURL: API_URL });
+      const res = await axios.post('/end_election', { electionId, admin: adminAddress }, { baseURL: API_URL });
       setResponse(res.data);
       console.log('Election ended:', res.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error ending election:', error);
+      setError(error.response?.data?.error || 'Failed to end election. Please try again.');
+    }
+  };
+
+  const handleElectionChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    setElectionId(selectedId);
+    try {
+      const res = await axios.get(`/elections/${selectedId}`, { baseURL: API_URL });
+
+      setSelectedElection(res.data.election);
+    } catch (error) {
+      console.error('Error fetching election data:', error);
+      setError(error.response?.data?.error || 'Failed to fetch election data. Please try again.');
     }
   };
 
@@ -42,7 +61,7 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
           <Label className='font-semibold'>Election ID</Label>
           <select
             value={electionId}
-            onChange={(e) => setElectionId(e.target.value)}
+            onChange={handleElectionChange}
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
           >
@@ -54,6 +73,12 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
             ))}
           </select>
         </div>
+        {selectedElection && (
+          <div className='rounded-md'>
+            <h3 className='font-semibold mb-2'>Election Details</h3>
+            <pre>{JSON.stringify(selectedElection, null, 2)}</pre>
+          </div>
+        )}
         <Button type='submit' className='mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600'>
           End Election
         </Button>
@@ -63,6 +88,13 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
           <div className='rounded-md'>
             <h3 className='font-semibold mb-2'>Response</h3>
             <pre>{JSON.stringify(response, null, 2)}</pre>
+            <p>Unresolved Disputes: {response.unresolved_disputes}</p>
+          </div>
+        )}
+        {error && (
+          <div className='rounded-md text-red-500'>
+            <h3 className='font-semibold mb-2'>Error</h3>
+            <p>{error}</p>
           </div>
         )}
       </OutputContainer>

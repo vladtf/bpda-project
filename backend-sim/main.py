@@ -208,14 +208,23 @@ def vote():
 
 @app.route('/end_election', methods=['POST'])
 def end_election():
-    # Input: { "electionId": "..." }
+    # Input: { "electionId": "...", "admin": "..." }
     data = request.get_json()
     electionId = data.get("electionId")
+    admin = data.get("admin")
+
     if electionId not in elections:
         return jsonify({"error": "Invalid electionId"}), 404
 
+    if elections[electionId]["admin"] != admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
     elections[electionId]["status"] = "ended"
-    return jsonify({"status": "Election ended"}), 200
+
+    # Count unresolved disputes
+    unresolved_disputes = sum(1 for d in disputes.values() if d["electionId"] == electionId and not d["resolved"])
+
+    return jsonify({"status": "Election ended", "unresolved_disputes": unresolved_disputes}), 200
 
 
 @app.route('/results', methods=['GET'])
@@ -324,6 +333,29 @@ def get_elections():
             "fee": edata.get("fee", 100)
         } for eid, edata in elections.items()
     ]}), 200
+    
+@app.route('/elections/<electionId>', methods=['GET'])
+def get_election(electionId):
+    if electionId not in elections:
+        return jsonify({"error": "Invalid electionId"}), 404
+    
+    # count number of unresolved_disputes
+    unresolved_disputes = sum(1 for d in disputes.values() if d["electionId"] == electionId and not d["resolved"])
+
+    return jsonify({
+        "election": {
+            "id": electionId,
+            "name": elections[electionId]["name"],
+            "description": elections[electionId]["description"],
+            "start_time": elections[electionId]["start_time"],
+            "end_time": elections[electionId]["end_time"],
+            "threshold": elections[electionId]["threshold"],
+            "status": elections[electionId]["status"],
+            "admin": elections[electionId]["admin"],
+            "fee": elections[electionId].get("fee", 100),
+            "unresolved_disputes": unresolved_disputes
+        }
+    }), 200
 
 @app.route('/candidates', methods=['GET'])
 def get_candidates():
@@ -406,7 +438,7 @@ def register_default_items():
         "start_time": "2023-01-01T00:00:00Z",
         "end_time": "2023-12-31T23:59:59Z",
         "threshold": 1,
-        "admin": "admin_default",
+        "admin": "erd1rz6603qr57vumjpwvvk8l777uw945xxq432a7ae8pysemgmqrtcq0yvvr5",
         "status": "ongoing"
     }
 
