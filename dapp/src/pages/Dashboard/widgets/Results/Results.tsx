@@ -33,8 +33,9 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
         params: { electionId },
         baseURL: API_URL
       });
-      setResults(res.data);
-      console.log('Election results:', res.data);
+      const sortedResults = res.data.results.sort((a: any, b: any) => b.total_rating - a.total_rating);
+      setResults({ ...res.data, results: sortedResults });
+      console.log('Election results:', sortedResults);
     } catch (error: any) {
       console.error('Error fetching results:', error);
       setError(error.response?.data?.error || 'Failed to fetch results. Please try again.');
@@ -68,7 +69,13 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
         {results && (
           <div className='rounded-md'>
             <h3 className='font-semibold mb-2'>Election Results</h3>
-            <pre>{JSON.stringify(results, null, 2)}</pre>
+            <pre>{JSON.stringify(results.results, null, 2)}</pre>
+            {results.election.status === 'ended' && results.winner && (
+              <div className='mt-4 p-4 bg-green-100 rounded-md'>
+                <h4 className='font-semibold'>Winner</h4>
+                <p>{results.winner.name} with {results.winner.total_rating} votes</p>
+              </div>
+            )}
           </div>
         )}
         {error && (

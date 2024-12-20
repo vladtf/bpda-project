@@ -30,6 +30,7 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
         setElections(res.data.elections);
       } catch (error) {
         console.error('Error fetching elections:', error);
+        setError(error.response?.data?.error || 'Failed to fetch elections. Please try again.');
       }
     };
 
@@ -44,6 +45,7 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
           setCandidates(res.data.candidates);
         } catch (error) {
           console.error('Error fetching candidates:', error);
+          setError(error.response?.data?.error || 'Failed to fetch candidates. Please try again.');
         }
       }
     };
@@ -71,8 +73,10 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
       }, {
         baseURL: API_URL
       });
-      setResponse(res.data);
       console.log('Vote submitted:', res.data);
+      const sortedResponse = res.data.intermediate_results.sort((a: any, b: any) => b.votes - a.votes);
+      setResponse(sortedResponse);
+      console.log('Vote submitted:', sortedResponse);
     } catch (error: any) {
       console.error('Error submitting vote:', error);
       setError(error.response?.data?.error || 'Failed to submit vote. Please try again.');
@@ -141,6 +145,12 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
           <div className='rounded-md'>
             <h3 className='font-semibold mb-2'>Response</h3>
             <pre>{JSON.stringify(response, null, 2)}</pre>
+            {response[0]?.electionDone && (
+              <div className='mt-4 p-4 bg-green-100 rounded-md'>
+                <h4 className='font-semibold'>Winner</h4>
+                <p>{response[0].candidateName} with {response[0].votes} votes</p>
+              </div>
+            )}
           </div>
         )}
         {error && (

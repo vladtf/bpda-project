@@ -186,7 +186,24 @@ def vote():
             continue
         candidates[(electionId, candidateId)]["votes"].append({"voter": voter_address, "rating": rating})
 
-    return jsonify({"status": "Votes recorded"}), 200
+    # Compute intermediate results
+    tally = []
+    for (eId, cId), cData in candidates.items():
+        if eId == electionId:
+            total_rating = sum(v["rating"] for v in cData["votes"])
+            tally.append({
+                "candidateId": cId,
+                "name": cData["name"],
+                "manifesto": cData["manifesto"],
+                "approved": cData["approved"],
+                "total_rating": total_rating,
+                "vote_count": len(cData["votes"])
+            })
+
+    # Sort by total_rating descending
+    tally.sort(key=lambda x: x["total_rating"], reverse=True)
+
+    return jsonify({"status": "Votes recorded", "intermediate_results": tally}), 200
 
 
 @app.route('/end_election', methods=['POST'])
@@ -226,6 +243,15 @@ def results():
 
     # Sort by total_rating descending
     tally.sort(key=lambda x: x["total_rating"], reverse=True)
+
+    winner = None
+    if election["status"] == "ended" and tally:
+        winner = {
+            "candidateId": tally[0]["candidateId"],
+            "name": tally[0]["name"],
+            "total_rating": tally[0]["total_rating"]
+        }
+
     return jsonify({
         "election": {
             "id": electionId,
@@ -235,7 +261,8 @@ def results():
             "end_time": election["end_time"],
             "status": election["status"]
         },
-        "results": tally
+        "results": tally,
+        "winner": winner
     }), 200
 
 
