@@ -54,6 +54,10 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
   }, [electionId]);
 
   const handleVoteChange = (candidateId: string, rating: number) => {
+    if (rating < 0 || rating > 10) {
+      setError("Rating must be between 0 and 10");
+      return;
+    }
     const existingVote = votes.find(vote => vote.candidateId === candidateId);
     if (existingVote) {
       setVotes(votes.map(vote => vote.candidateId === candidateId ? { ...vote, rating } : vote));
@@ -131,6 +135,8 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
                   value={votes.find(vote => vote.candidateId === candidate.id)?.rating || 0}
                   onChange={(e) => handleVoteChange(candidate.id, Number(e.target.value))}
                   className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  min={0}
+                  max={10}
                   required
                 />
               )}
