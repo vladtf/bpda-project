@@ -65,10 +65,6 @@ This project is a backend simulation for an election system using Flask. It prov
 
 ## API Endpoints
 
-- `GET /ping-pong/abi/time-to-pong`
-- `GET /account`
-- `POST /ping-pong/abi/ping`
-- `POST /ping-pong/abi/pong`
 - `POST /eligibility_check`
 - `POST /register_election`
 - `POST /register_candidate`
