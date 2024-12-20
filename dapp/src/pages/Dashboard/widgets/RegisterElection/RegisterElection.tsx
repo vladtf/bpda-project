@@ -14,7 +14,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
   const [threshold, setThreshold] = useState<number>(10);
-  const [fee, setFee] = useState<string>('');
+  const [fee, setFee] = useState<string>(100);
   const [response, setResponse] = useState<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,7 +108,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
           </Button>
         </div>
         <div className='flex flex-col gap-2'>
-          <Label>Threshold</Label>
+          <Label>Sign Threshold</Label>
           <input
             type='number'
             value={threshold}
@@ -120,7 +120,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
         <div className='flex flex-col gap-2'>
           <Label>Fee</Label>
           <input
-            type='text'
+            type='number'
             value={fee}
             onChange={(e) => setFee(e.target.value)}
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
