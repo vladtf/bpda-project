@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
@@ -36,6 +35,14 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
     } catch (error) {
       console.error('Error registering election:', error);
     }
+  };
+
+  const setPredefinedPeriod = (days: number) => {
+    const now = new Date();
+    const start = now.toISOString().slice(0, 16);
+    const end = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+    setStartTime(start);
+    setEndTime(end);
   };
 
   return (
@@ -79,6 +86,25 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
           />
+        </div>
+        <div className='flex flex-row gap-2'>
+          <Button type='button' onClick={() => setPredefinedPeriod(3)} className='bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600'>
+            1 Day
+          </Button>          <Button type='button' onClick={() => setPredefinedPeriod(3)} className='bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600'>
+            3 Days
+          </Button>
+          <Button type='button' onClick={() => setPredefinedPeriod(5)} className='bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600'>
+            5 Days
+          </Button>
+          <Button type='button' onClick={() => setPredefinedPeriod(7)} className='bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600'>
+            7 Days
+          </Button>
+          <Button type='button' onClick={() => setPredefinedPeriod(14)} className='bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600'>
+            14 Days
+          </Button>
+          <Button type='button' onClick={() => setPredefinedPeriod(21)} className='bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600'>
+            21 Days
+          </Button>
         </div>
         <div className='flex flex-col gap-2'>
           <Label className='font-semibold'>Threshold</Label>
