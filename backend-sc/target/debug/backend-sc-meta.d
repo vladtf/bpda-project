@@ -1,0 +1,1 @@
+/mnt/e/Facultate/master/an1/BPDA/project/bpda-project/backend-sc/target/debug/backend-sc-meta: /mnt/e/Facultate/master/an1/BPDA/project/bpda-project/backend-sc/meta/src/main.rs /mnt/e/Facultate/master/an1/BPDA/project/bpda-project/backend-sc/src/backend_sc.rs
