@@ -1,12 +1,12 @@
 #![no_std]
 
-use election::Election;
+use types::Election;
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
 use multiversx_sc::storage;
 
-mod voter;
-mod election;
+
+mod types;
 
 /// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
