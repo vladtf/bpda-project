@@ -22,6 +22,7 @@ pub enum ElectionType {
 }
 
 #[type_abi]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
 pub struct Election<M: ManagedTypeApi> {
     pub election_id: ManagedBuffer<M>,
     pub name: ManagedBuffer<M>,
@@ -30,15 +31,15 @@ pub struct Election<M: ManagedTypeApi> {
     pub end_time: u64,
     pub ended: bool,
     pub admin: ManagedAddress<M>,
-    pub candidates: ManagedBuffer<M>,
-    pub disputes: ManagedBuffer<M>,
+    pub candidates: Vec<Candidate<M>>,
+    pub disputes: Vec<Dispute<M>>,
     pub votes: ManagedBuffer<M>,
 }
 
 
 
 #[type_abi]
-
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
 pub struct Candidate<M: ManagedTypeApi> {
     pub candidate_id: ManagedBuffer<M>,
     pub name: ManagedBuffer<M>,
@@ -51,9 +52,10 @@ pub struct Candidate<M: ManagedTypeApi> {
 
 
 #[type_abi]
-pub struct Dispute<M : ManagedTypeApi> {
-    pub dispute_id : ManagedBuffer<M>,
-    pub election_id : ManagedBuffer<M>,
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
+pub struct Dispute<M: ManagedTypeApi> {
+    pub dispute_id: ManagedBuffer<M>,
+    pub election_id: ManagedBuffer<M>,
     pub reason: ManagedBuffer<M>,
     pub resolved: bool,
     pub result_adjusted: bool

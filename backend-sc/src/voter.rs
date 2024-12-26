@@ -7,6 +7,8 @@ use multiversx_sc::derive_imports::*;
 
 
 #[type_abi]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
+
 pub struct Voter<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub eligible: bool,
