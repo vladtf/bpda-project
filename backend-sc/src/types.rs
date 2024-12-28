@@ -13,33 +13,55 @@ use multiversx_sc::derive_imports::*;
 // }
 
 
-
+#[type_abi]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
 pub enum ElectionType {
+    #[default]
     Plurality, // single vote, candidate with most votes wins
     Approval, // any number of candidates, candidate with most votes wins
     SingleTransferableVote, // gives ordering of candidates, candidate receive votes from voter if they are the most favoured
                         // if candidate has least number of votes, they are eliminated and their votes are redistributed
 }
+impl ElectionType {
+    pub fn from_string(s: &str) -> Option<Self> {
+        match s {
+            "Plurality" => Some(ElectionType::Plurality),
+            "Approval" => Some(ElectionType::Approval),
+            "SingleTransferableVote" => Some(ElectionType::SingleTransferableVote),
+            _ => None,
+        }
+    }
+}
 
 
-type Election_ID = u64;
-type Candidate_ID = u64;
-type Dispute_ID = u64;
+pub type Election_ID = u64;
+pub type Candidate_ID = u16;
+pub type Dispute_ID = u16;
+
+
+
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
+pub struct ElectionData<M: ManagedTypeApi> {
+    pub name: ManagedBuffer<M>,
+    pub description: ManagedBuffer<M>,
+    pub start_time: u64,
+    pub end_time: u64,
+    pub election_type: ElectionType,
+    pub ended: bool,
+    pub admin: ManagedAddress<M>,
+}
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
 pub struct Election<M: ManagedTypeApi> {
     pub election_id: Election_ID,
-    pub name: ManagedBuffer<M>,
-    pub description: ManagedBuffer<M>,
-    pub start_time: u64,
-    pub end_time: u64,
-    pub ended: bool,
-    pub admin: ManagedAddress<M>,
+    pub election_data: ElectionData<M>,
     pub candidates: ManagedVec<M, Candidate<M>>,
     pub disputes: ManagedVec<M, Dispute<M>>,
     pub votes: ManagedVec<M, Vote<M>>,
-    pub voters: ManagedVec<M, Voter<M>>
+    pub voters: ManagedVec<M, Voter<M>>,
 }
 
 
