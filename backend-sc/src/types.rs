@@ -14,12 +14,12 @@ use multiversx_sc::derive_imports::*;
 
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, PartialEq)]
 pub enum ElectionType {
     #[default]
-    Plurality, // single vote, candidate with most votes wins
-    Approval, // any number of candidates, candidate with most votes wins
-    SingleTransferableVote, // gives ordering of candidates, candidate receive votes from voter if they are the most favoured
+    Plurality = 0, // single vote, candidate with most votes wins
+    Approval = 1, // any number of candidates, candidate with most votes wins
+    SingleTransferableVote = 2, // gives ordering of candidates, candidate receive votes from voter if they are the most favoured
                         // if candidate has least number of votes, they are eliminated and their votes are redistributed
 }
 impl ElectionType {
@@ -54,19 +54,7 @@ pub struct ElectionData<M: ManagedTypeApi> {
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
-pub struct Election<M: ManagedTypeApi> {
-    pub election_id: Election_ID,
-    pub election_data: ElectionData<M>,
-    pub candidates: ManagedVec<M, Candidate<M>>,
-    pub disputes: ManagedVec<M, Dispute<M>>,
-    pub votes: ManagedVec<M, Vote<M>>,
-    pub voters: ManagedVec<M, Voter<M>>,
-}
-
-
-#[type_abi]
-#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem)]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem, Clone)]
 pub struct Vote<M: ManagedTypeApi> {
     pub candidates: ManagedVec<M, Candidate_ID>,
 }
@@ -75,11 +63,8 @@ pub struct Vote<M: ManagedTypeApi> {
 #[type_abi]
 #[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem)]
 pub struct Candidate<M: ManagedTypeApi> {
-    pub candidate_id: Candidate_ID,
     pub name: ManagedBuffer<M>,
     pub description: ManagedBuffer<M>,
-    pub approved: bool,
-    pub votes: u64,
 }
 
 
@@ -87,18 +72,25 @@ pub struct Candidate<M: ManagedTypeApi> {
 #[type_abi]
 #[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem)]
 pub struct Dispute<M: ManagedTypeApi> {
-    pub dispute_id: Dispute_ID,
     pub name: ManagedBuffer<M>,
     pub description: ManagedBuffer<M>,
+    pub creator: ManagedAddress<M>,
     pub resolved: bool,
     pub result_adjusted: bool
 }
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedDecode, NestedEncode, ManagedVecItem)]
-
 pub struct Voter<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub eligible: bool,
     pub token: TokenIdentifier<M>,
+}
+
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem)]
+pub struct VotingResult {
+    pub candidate: Candidate_ID,
+    pub count: u64
 }
