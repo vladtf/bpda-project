@@ -61,7 +61,7 @@ pub trait BackendSc {
     fn dispute(&self, election_id: Election_ID, dispute_id: Dispute_ID) -> SingleValueMapper<Dispute<Self::Api>>;
 
 
-    fn add_candidate_choice(&self, vote_counts: &mut ManagedVec<VotingResult>, candidate_id: Candidate_ID) {
+    fn count_candidate(&self, vote_counts: &mut ManagedVec<VotingResult>, candidate_id: Candidate_ID) {
 
         for i in 0..vote_counts.len() {
             // Add one to the count if the candidate is already in the list
@@ -87,7 +87,7 @@ pub trait BackendSc {
 
             // For each candidate in the vote (Plurality has only one candidate)
             for c in vote.candidates.iter() {
-                self.add_candidate_choice(&mut vote_counts, c);
+                self.count_candidate(&mut vote_counts, c);
             }
         }
         return vote_counts;
@@ -108,7 +108,7 @@ pub trait BackendSc {
 
             // Only the first candidate is counted
             let first_candidate: u16 = vote.candidates.get(0);
-            self.add_candidate_choice(&mut vote_counts, first_candidate);
+            self.count_candidate(&mut vote_counts, first_candidate);
         
         }
 
@@ -149,7 +149,7 @@ pub trait BackendSc {
                     let next_c = vote.candidates.get(0);
 
                     // add the vote to the next first candidate
-                    self.add_candidate_choice(&mut vote_counts, next_c);
+                    self.count_candidate(&mut vote_counts, next_c);
                 }
                 // remove the worst candidate if it has remained otherwise
                 if let Some(index) = vote.candidates.iter().position(|c| c == worst) {
@@ -264,10 +264,7 @@ pub trait BackendSc {
         return election_id;
     }
 
-    #[endpoint(eligibilityCheck)]
-    fn eligibility_check(&self) -> ManagedAddress {
-        return self.blockchain().get_caller();
-    }
+    
 
     #[endpoint(registerCandidate)]
     fn register_candidate(&self, election_id: Election_ID, name: ManagedBuffer, description: ManagedBuffer) -> Candidate_ID {
@@ -303,10 +300,7 @@ pub trait BackendSc {
         self.voter_eligible(election_id, voter_address).set(&true);
     }
 
-    #[endpoint(signCandidate)]
-    fn sign_candidate(&self) -> ManagedAddress {
-        return self.blockchain().get_caller();
-    }
+    
 
     #[endpoint(vote)]
     fn vote(&self, election_id: Election_ID, vote: MultiValueEncoded<Candidate_ID>) {
@@ -362,15 +356,25 @@ pub trait BackendSc {
         return dispute_id;
     }
 
-    #[endpoint(resolveDispute)]
-    fn resolve_dispute(&self) -> ManagedAddress {
-        return self.blockchain().get_caller();
-    }
+    // #[endpoint(signCandidate)]
+    // fn sign_candidate(&self) -> ManagedAddress {
+    //     return self.blockchain().get_caller();
+    // }
 
-    #[endpoint(validateCandidate)]
-    fn validate_candidate(&self) -> ManagedAddress {
-        return self.blockchain().get_caller();
-    }
+    // #[endpoint(resolveDispute)]
+    // fn resolve_dispute(&self) -> ManagedAddress {
+    //     return self.blockchain().get_caller();
+    // }
+
+    // #[endpoint(validateCandidate)]
+    // fn validate_candidate(&self) -> ManagedAddress {
+    //     return self.blockchain().get_caller();
+    // }
+
+    // #[endpoint(eligibilityCheck)]
+    // fn eligibility_check(&self) -> ManagedAddress {
+    //     return self.blockchain().get_caller();
+    // }
 
 
 }

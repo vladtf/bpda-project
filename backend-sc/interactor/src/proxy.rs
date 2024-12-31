@@ -71,3 +71,304 @@ where
             .original_result()
     }
 }
+
+#[rustfmt::skip]
+impl<Env, From, To, Gas> BackendScProxyMethods<Env, From, To, Gas>
+where
+    Env: TxEnv,
+    Env::Api: VMApi,
+    From: TxFrom<Env>,
+    To: TxTo<Env>,
+    Gas: TxGas<Env>,
+{
+    pub fn election_id_list(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, u64>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getElectionIDList")
+            .original_result()
+    }
+
+    pub fn election_data<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        election_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ElectionData<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getElectionData")
+            .argument(&election_id)
+            .original_result()
+    }
+
+    pub fn registered_voters<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        election_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getRegisteredVoters")
+            .argument(&election_id)
+            .original_result()
+    }
+
+    pub fn candidate_id_list<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        election_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, u16>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getCandidateIDs")
+            .argument(&election_id)
+            .original_result()
+    }
+
+    pub fn candidate<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<u16>,
+    >(
+        self,
+        election_id: Arg0,
+        candidate_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Candidate<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getCandidate")
+            .argument(&election_id)
+            .argument(&candidate_id)
+            .original_result()
+    }
+
+    pub fn votes<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        election_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, Vote<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getVotes")
+            .argument(&election_id)
+            .original_result()
+    }
+
+    pub fn dispute_id_list<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        election_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, u16>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getDisputeIDList")
+            .argument(&election_id)
+            .original_result()
+    }
+
+    pub fn dispute<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<u16>,
+    >(
+        self,
+        election_id: Arg0,
+        dispute_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Dispute<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getDispute")
+            .argument(&election_id)
+            .argument(&dispute_id)
+            .original_result()
+    }
+
+    pub fn results<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        election_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u16> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("results")
+            .argument(&election_id)
+            .original_result()
+    }
+
+    pub fn election_list(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, ElectionData<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("electionList")
+            .original_result()
+    }
+
+    pub fn register_election<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<u64>,
+        Arg3: ProxyArg<u64>,
+        Arg4: ProxyArg<u64>,
+    >(
+        self,
+        name: Arg0,
+        description: Arg1,
+        election_type: Arg2,
+        start_time: Arg3,
+        end_time: Arg4,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerElection")
+            .argument(&name)
+            .argument(&description)
+            .argument(&election_type)
+            .argument(&start_time)
+            .argument(&end_time)
+            .original_result()
+    }
+
+    pub fn register_candidate<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        election_id: Arg0,
+        name: Arg1,
+        description: Arg2,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u16> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerCandidate")
+            .argument(&election_id)
+            .argument(&name)
+            .argument(&description)
+            .original_result()
+    }
+
+    pub fn register_voter<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        election_id: Arg0,
+        voter_address: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerVoter")
+            .argument(&election_id)
+            .argument(&voter_address)
+            .original_result()
+    }
+
+    pub fn vote<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, u16>>,
+    >(
+        self,
+        election_id: Arg0,
+        vote: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("vote")
+            .argument(&election_id)
+            .argument(&vote)
+            .original_result()
+    }
+
+    pub fn end_election<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        election_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("endElection")
+            .argument(&election_id)
+            .original_result()
+    }
+
+    pub fn make_dispute<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        election_id: Arg0,
+        dispute_name: Arg1,
+        dispute_description: Arg2,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u16> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("makeDispute")
+            .argument(&election_id)
+            .argument(&dispute_name)
+            .argument(&dispute_description)
+            .original_result()
+    }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
+pub struct ElectionData<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub name: ManagedBuffer<Api>,
+    pub description: ManagedBuffer<Api>,
+    pub start_time: u64,
+    pub end_time: u64,
+    pub election_type: ElectionType,
+    pub ended: bool,
+    pub admin: ManagedAddress<Api>,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, PartialEq)]
+pub enum ElectionType {
+    Plurality,
+    Approval,
+    SingleTransferableVote,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem)]
+pub struct Candidate<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub name: ManagedBuffer<Api>,
+    pub description: ManagedBuffer<Api>,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem, Clone)]
+pub struct Vote<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub candidates: ManagedVec<Api, u16>,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem)]
+pub struct Dispute<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub name: ManagedBuffer<Api>,
+    pub description: ManagedBuffer<Api>,
+    pub creator: ManagedAddress<Api>,
+    pub resolved: bool,
+    pub result_adjusted: bool,
+}

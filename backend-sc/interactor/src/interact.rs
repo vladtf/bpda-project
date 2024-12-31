@@ -23,6 +23,22 @@ pub async fn backend_sc_cli() {
     match cmd.as_str() {
         "deploy" => interact.deploy().await,
         "upgrade" => interact.upgrade().await,
+        "getElectionIDList" => interact.election_id_list().await,
+        "getElectionData" => interact.election_data().await,
+        "getRegisteredVoters" => interact.registered_voters().await,
+        "getCandidateIDs" => interact.candidate_id_list().await,
+        "getCandidate" => interact.candidate().await,
+        "getVotes" => interact.votes().await,
+        "getDisputeIDList" => interact.dispute_id_list().await,
+        "getDispute" => interact.dispute().await,
+        "results" => interact.results().await,
+        "electionList" => interact.election_list().await,
+        "registerElection" => interact.register_election().await,
+        "registerCandidate" => interact.register_candidate().await,
+        "registerVoter" => interact.register_voter().await,
+        "vote" => interact.vote().await,
+        "endElection" => interact.end_election().await,
+        "makeDispute" => interact.make_dispute().await,
         _ => panic!("unknown command: {}", &cmd),
     }
 }
@@ -132,6 +148,355 @@ impl ContractInteract {
             .code(&self.contract_code)
             .code_metadata(CodeMetadata::UPGRADEABLE)
             .returns(ReturnsNewAddress)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn election_id_list(&mut self) {
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .election_id_list()
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn election_data(&mut self) {
+        let election_id = 0u64;
+
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .election_data(election_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn registered_voters(&mut self) {
+        let election_id = 0u64;
+
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .registered_voters(election_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn candidate_id_list(&mut self) {
+        let election_id = 0u64;
+
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .candidate_id_list(election_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn candidate(&mut self) {
+        let election_id = 0u64;
+        let candidate_id = 0u16;
+
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .candidate(election_id, candidate_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn votes(&mut self) {
+        let election_id = 0u64;
+
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .votes(election_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn dispute_id_list(&mut self) {
+        let election_id = 0u64;
+
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .dispute_id_list(election_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn dispute(&mut self) {
+        let election_id = 0u64;
+        let dispute_id = 0u16;
+
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .dispute(election_id, dispute_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn results(&mut self) {
+        let election_id = 0u64;
+
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .results(election_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn election_list(&mut self) {
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .election_list()
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn register_election(&mut self) {
+        let name = ManagedBuffer::new_from_bytes(&b""[..]);
+        let description = ManagedBuffer::new_from_bytes(&b""[..]);
+        let election_type = 0u64;
+        let start_time = 0u64;
+        let end_time = 0u64;
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .register_election(name, description, election_type, start_time, end_time)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn register_candidate(&mut self) {
+        let election_id = 0u64;
+        let name = ManagedBuffer::new_from_bytes(&b""[..]);
+        let description = ManagedBuffer::new_from_bytes(&b""[..]);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .register_candidate(election_id, name, description)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn register_voter(&mut self) {
+        let election_id = 0u64;
+        let voter_address = bech32::decode("");
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .register_voter(election_id, voter_address)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn vote(&mut self) {
+        let election_id = 0u64;
+        let vote = MultiValueVec::from(vec![0u16]);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .vote(election_id, vote)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn end_election(&mut self) {
+        let election_id = 0u64;
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .end_election(election_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn make_dispute(&mut self) {
+        let election_id = 0u64;
+        let dispute_name = ManagedBuffer::new_from_bytes(&b""[..]);
+        let dispute_description = ManagedBuffer::new_from_bytes(&b""[..]);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .make_dispute(election_id, dispute_name, dispute_description)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+}
+
+
+    pub async fn end_election(&mut self) {
+        let election_id = 0u64;
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .end_election(election_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn make_dispute(&mut self) {
+        let election_id = 0u64;
+        let dispute_name = ManagedBuffer::new_from_bytes(&b""[..]);
+        let dispute_description = ManagedBuffer::new_from_bytes(&b""[..]);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .make_dispute(election_id, dispute_name, dispute_description)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn resolve_dispute(&mut self) {
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .resolve_dispute()
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn validate_candidate(&mut self) {
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .validate_candidate()
+            .returns(ReturnsResultUnmanaged)
             .run()
             .await;
 

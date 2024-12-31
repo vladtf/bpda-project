@@ -1,11 +1,11 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.81.0",
-            "commitHash": "eeb90cda1969383f56a2637cbd3037bdf598841c",
-            "commitDate": "2024-09-04",
+            "version": "1.83.0",
+            "commitHash": "90b35a6239c3d8bdabc530a6a0816f7ff89a0aaf",
+            "commitDate": "2024-11-26",
             "channel": "Stable",
-            "short": "rustc 1.81.0 (eeb90cda1 2024-09-04)"
+            "short": "rustc 1.83.0 (90b35a623 2024-11-26)"
         },
         "contractCrate": {
             "name": "backend-sc",
@@ -28,8 +28,380 @@
         "inputs": [],
         "outputs": []
     },
-    "endpoints": [],
+    "endpoints": [
+        {
+            "name": "getElectionIDList",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<u64>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getElectionData",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "ElectionData"
+                }
+            ]
+        },
+        {
+            "name": "getRegisteredVoters",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getCandidateIDs",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<u16>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getCandidate",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "candidate_id",
+                    "type": "u16"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Candidate"
+                }
+            ]
+        },
+        {
+            "name": "getVotes",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<Vote>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getDisputeIDList",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<u16>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getDispute",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "dispute_id",
+                    "type": "u16"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Dispute"
+                }
+            ]
+        },
+        {
+            "name": "results",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u16"
+                }
+            ]
+        },
+        {
+            "name": "electionList",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<ElectionData>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "registerElection",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "description",
+                    "type": "bytes"
+                },
+                {
+                    "name": "election_type",
+                    "type": "u64"
+                },
+                {
+                    "name": "start_time",
+                    "type": "u64"
+                },
+                {
+                    "name": "end_time",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "registerCandidate",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "description",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u16"
+                }
+            ]
+        },
+        {
+            "name": "registerVoter",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "voter_address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "vote",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "vote",
+                    "type": "variadic<u16>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "endElection",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "makeDispute",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "dispute_name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "dispute_description",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u16"
+                }
+            ]
+        }
+    ],
     "esdtAttributes": [],
     "hasCallback": false,
-    "types": {}
+    "types": {
+        "Candidate": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "description",
+                    "type": "bytes"
+                }
+            ]
+        },
+        "Dispute": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "description",
+                    "type": "bytes"
+                },
+                {
+                    "name": "creator",
+                    "type": "Address"
+                },
+                {
+                    "name": "resolved",
+                    "type": "bool"
+                },
+                {
+                    "name": "result_adjusted",
+                    "type": "bool"
+                }
+            ]
+        },
+        "ElectionData": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "description",
+                    "type": "bytes"
+                },
+                {
+                    "name": "start_time",
+                    "type": "u64"
+                },
+                {
+                    "name": "end_time",
+                    "type": "u64"
+                },
+                {
+                    "name": "election_type",
+                    "type": "ElectionType"
+                },
+                {
+                    "name": "ended",
+                    "type": "bool"
+                },
+                {
+                    "name": "admin",
+                    "type": "Address"
+                }
+            ]
+        },
+        "ElectionType": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "Plurality",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Approval",
+                    "discriminant": 1
+                },
+                {
+                    "name": "SingleTransferableVote",
+                    "discriminant": 2
+                }
+            ]
+        },
+        "Vote": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "candidates",
+                    "type": "List<u16>"
+                }
+            ]
+        }
+    }
 }
