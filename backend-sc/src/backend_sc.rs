@@ -40,6 +40,10 @@ pub trait BackendSc {
     fn voter_eligible(&self, election_id: Election_ID, voter_address: ManagedAddress) -> SingleValueMapper<bool>;
 
 
+    #[view(getPotentialCandidateIDs)]
+    #[storage_mapper("potential_candidate_id_list")]
+    fn potential_candidate_id_list(&self, election_id: Election_ID) -> UnorderedSetMapper<Candidate_ID>;
+
     #[view(getCandidateIDs)]
     #[storage_mapper("candidate_id_list")]
     fn candidate_id_list(&self, election_id: Election_ID) -> UnorderedSetMapper<Candidate_ID>;
@@ -47,6 +51,7 @@ pub trait BackendSc {
     #[view(getCandidate)]
     #[storage_mapper("candidate")]
     fn candidate(&self, election_id: Election_ID, candidate_id: Candidate_ID) -> SingleValueMapper<Candidate<Self::Api>>;
+
 
     #[view(getVotes)]
     #[storage_mapper("votes")]
@@ -99,8 +104,6 @@ pub trait BackendSc {
                                                             .map(|vote| vote.clone())
                                                             .collect();
 
-
-
         // Count initial votes
         let mut vote_counts: ManagedVec<VotingResult> = ManagedVec::new();
 
@@ -142,6 +145,7 @@ pub trait BackendSc {
                 // if the first candidate is the worst
                 // remove the first candidate and add the vote to the next first candidate
                 if vote.candidates.get(0) == worst {
+
                     // remove the first candidate
                     vote.candidates.remove(0);
 
@@ -264,13 +268,12 @@ pub trait BackendSc {
         return election_id;
     }
 
-    
 
-    #[endpoint(registerCandidate)]
-    fn register_candidate(&self, election_id: Election_ID, name: ManagedBuffer, description: ManagedBuffer) -> Candidate_ID {
+    #[endpoint(submitCandidancy)]
+    fn submit_candidancy(&self, election_id: Election_ID, name: ManagedBuffer, description: ManagedBuffer) -> Candidate_ID {
+    
         require!(self.election_id_list().contains(&election_id), "Election does not exist");
         require!(self.election_data(election_id).get().ended == false, "Election has already ended");
-        require!(self.blockchain().get_caller() == self.election_data(election_id).get().admin, "Only admin can register candidates");
         require!(self.election_data(election_id).get().start_time < self.blockchain().get_block_timestamp(), "Election has started");
 
         require!(name.len() > 0, "Name cannot be empty");
@@ -282,22 +285,58 @@ pub trait BackendSc {
         let candidate = Candidate {
             name,
             description,
+            creator: self.blockchain().get_caller(),
         };
-        self.candidate_id_list(election_id).insert(candidate_id);
+        self.potential_candidate_id_list(election_id).insert(candidate_id);
         self.candidate(election_id, candidate_id).set(&candidate);
         return candidate_id;
+    }
 
+    #[endpoint(registerCandidate)]
+    fn register_candidate(&self, election_id: Election_ID, candidate_id: Candidate_ID) -> Candidate_ID {
+        require!(self.election_id_list().contains(&election_id), "Election does not exist");
+        require!(self.election_data(election_id).get().ended == false, "Election has already ended");
+        require!(self.blockchain().get_caller() == self.election_data(election_id).get().admin, "Only admin can register candidates");
+        require!(self.election_data(election_id).get().start_time < self.blockchain().get_block_timestamp(), "Election has started");
+
+
+        require!(self.potential_candidate_id_list(election_id).contains(&candidate_id), "Candidate does not exist");
+        require!(!self.candidate_id_list(election_id).contains(&candidate_id), "Candidate already registered");
+        self.candidate_id_list(election_id).insert(candidate_id);
+        self.potential_candidate_id_list(election_id).swap_remove(&candidate_id);
+        return candidate_id;
 
     }
 
+    #[endpoint(registerSelf)]
+    fn register_self(&self, election_id: Election_ID, verification_data: ManagedBuffer) {
+
+        let voter_address = self.blockchain().get_caller();
+
+        require!(self.election_id_list().contains(&election_id), "Election does not exist");
+        require!(self.election_data(election_id).get().ended == false, "Election has already ended");
+        require!(self.election_data(election_id).get().start_time < self.blockchain().get_block_timestamp(), "Election has started");
+        require!(!self.registered_voters(election_id).contains(&voter_address), "Already registered");
+
+        // perform verification logic here
+        require!(verification_data.len() > 8, "Invalid verification data");
+
+        // register the voter
+        self.registered_voters(election_id).insert(self.blockchain().get_caller());
+        self.voter_eligible(election_id, voter_address).set(&true);
+    }
 
     #[endpoint(registerVoter)]
     fn register_voter(&self, election_id: Election_ID, voter_address: ManagedAddress) {
         require!(self.election_id_list().contains(&election_id), "Election does not exist");
         require!(self.blockchain().get_caller() == self.election_data(election_id).get().admin, "Only admin can register voters");
         require!(!self.registered_voters(election_id).contains(&voter_address), "Voter already registered");
+
+
         self.registered_voters(election_id).insert(voter_address.clone());
         self.voter_eligible(election_id, voter_address).set(&true);
+
+
     }
 
     

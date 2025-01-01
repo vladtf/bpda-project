@@ -65,6 +65,7 @@ pub struct Vote<M: ManagedTypeApi> {
 pub struct Candidate<M: ManagedTypeApi> {
     pub name: ManagedBuffer<M>,
     pub description: ManagedBuffer<M>,
+    pub creator: ManagedAddress<M>,
 }
 
 
