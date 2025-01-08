@@ -3,18 +3,16 @@
 use types::{Candidate, Candidate_ID, Dispute, Dispute_ID, ElectionData, ElectionType, Election_ID, Vote, VotingResult};
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
-use multiversx_sc::storage;
-
 
 mod types;
-const MAX_NAME_LENGTH: usize = 50;
 
-const MAX_DESCRIPTION_LENGTH: usize = 200;
 /// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
 pub trait BackendSc {
     #[init]
-    fn init(&self) {}
+    fn init(&self, candidate_fee: BigUint) {
+        self.candidate_fee().set(&candidate_fee);
+    }
 
     #[upgrade]
     fn upgrade(&self) {}
@@ -22,49 +20,82 @@ pub trait BackendSc {
 
     // Storage mappers
 
+    #[view(getCandidateFee)]
+    #[storage_mapper("candidate_fee")]
+    fn candidate_fee(&self) -> SingleValueMapper<BigUint>;
+
+    #[endpoint(updateCandidateFee)]
+    fn update_candidate_fee(&self, candidate_fee: BigUint) {
+        self.candidate_fee().set(&candidate_fee);
+    }
+
+
+
 
     #[view(getElectionIDList)]
     #[storage_mapper("election_id_list")]
+    // the list of election ids
     fn election_id_list(&self) -> UnorderedSetMapper<Election_ID>;
 
     #[view(getElectionData)]
     #[storage_mapper("election_data")]
+    // the election data for each election
     fn election_data(&self, election_id: Election_ID) -> SingleValueMapper<ElectionData<Self::Api>>;
 
 
     #[view(getRegisteredVoters)]
     #[storage_mapper("registered_voters")]
+    // the list of registered voters for each election
     fn registered_voters(&self, election_id: Election_ID) -> UnorderedSetMapper<ManagedAddress>;
 
     #[storage_mapper("voterEligible")]
+    // whether a voter is eligible to vote (true if hasn't voted yet, false otherwise)
     fn voter_eligible(&self, election_id: Election_ID, voter_address: ManagedAddress) -> SingleValueMapper<bool>;
 
 
     #[view(getPotentialCandidateIDs)]
     #[storage_mapper("potential_candidate_id_list")]
+    // the list of candidate ids that have applied for an election
     fn potential_candidate_id_list(&self, election_id: Election_ID) -> UnorderedSetMapper<Candidate_ID>;
 
     #[view(getCandidateIDs)]
     #[storage_mapper("candidate_id_list")]
+    // the list of candidate ids that are eligible for an election
     fn candidate_id_list(&self, election_id: Election_ID) -> UnorderedSetMapper<Candidate_ID>;
 
     #[view(getCandidate)]
     #[storage_mapper("candidate")]
+    // the candidate data for each candidate in an election
     fn candidate(&self, election_id: Election_ID, candidate_id: Candidate_ID) -> SingleValueMapper<Candidate<Self::Api>>;
 
 
     #[view(getVotes)]
     #[storage_mapper("votes")]
+    // the list of votes for each election
     fn votes(&self, election_id: Election_ID) -> UnorderedSetMapper<Vote<Self::Api>>;
 
     #[view(getDisputeIDList)]
     #[storage_mapper("dispute_id_list")]
+    // the list of dispute ids
     fn dispute_id_list(&self, election_id: Election_ID) -> UnorderedSetMapper<Dispute_ID>;
 
     #[view(getDispute)]
     #[storage_mapper("dispute")]
+    // the dispute data for each dispute
     fn dispute(&self, election_id: Election_ID, dispute_id: Dispute_ID) -> SingleValueMapper<Dispute<Self::Api>>;
 
+
+/// Updates the vote count for a given candidate in the election.
+/// 
+/// If the candidate is already present in the `vote_counts` list, this function increments
+/// their vote count by one. If the candidate is not present, it adds a new entry for the
+/// candidate with an initial vote count of one.
+///
+/// # Arguments
+///
+/// * `vote_counts` - A mutable reference to a `ManagedVec` of `VotingResult` which holds
+///   the current vote counts for each candidate.
+/// * `candidate_id` - The identifier of the candidate for whom the vote count should be updated.
 
     fn count_candidate(&self, vote_counts: &mut ManagedVec<VotingResult>, candidate_id: Candidate_ID) {
 
@@ -83,6 +114,15 @@ pub trait BackendSc {
     }
 
 
+    /// Evaluates the results of a Plurality or Approval election.
+    /// 
+    /// # Arguments
+    ///
+    /// * `election_id` - The identifier of the election whose results should be evaluated.
+    ///
+    /// # Returns
+    ///
+    /// A `ManagedVec` of `VotingResult` which holds the final vote counts for each candidate.
     fn evaluate_plurality_or_approval(&self, election_id: Election_ID) -> ManagedVec<VotingResult> {
         
         let mut vote_counts: ManagedVec<VotingResult> = ManagedVec::new();
@@ -98,6 +138,17 @@ pub trait BackendSc {
         return vote_counts;
     }
 
+    /// Evaluates the results of a Single Transferable Vote election.
+    /// 
+    /// The Single Transferable Vote (STV) system is a proportional representation voting system
+    /// designed to achieve proportional representation through the use of multiple seats and vote transfer.
+    /// 
+    /// The algorithm works as follows:
+    /// 1. Count the initial votes for each candidate.
+    /// 2. Remove the worst performing candidate and redistribute its votes to the next preferred candidate.
+    /// 3. Repeat step 2 until a candidate has more than 50% of the votes.
+    /// 
+    /// The function returns a `ManagedVec` of `VotingResult` which holds the final vote counts for each candidate.
     fn evaluate_single_transferable_vote(&self, election_id: Election_ID) -> ManagedVec<VotingResult> {
         let mut votes_copy : ManagedVec<Vote<Self::Api>> = self.votes(election_id)
                                                             .iter()
@@ -164,18 +215,53 @@ pub trait BackendSc {
     }
 
 
+
+
+    #[view(result_vector)]
+    #[storage_mapper("result_vector")]
+    fn result_vector(&self, election_id: Election_ID, candidate_id: Candidate_ID) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("finished_election")]
+    fn finished_election(&self, election_id: Election_ID) -> SingleValueMapper<bool>;
+
+    /// Determines the winning candidate of an election based on its type.
+    ///
+    /// This function verifies that the specified election has ended and then evaluates
+    /// the votes according to the election type. It supports Plurality, Approval, and 
+    /// Single Transferable Vote election types. The function returns the candidate ID 
+    /// with the highest number of votes.
+    ///
+    /// # Arguments
+    ///
+    /// * `election_id` - The identifier of the election whose results should be computed.
+    ///
+    /// # Returns
+    ///
+    /// The candidate ID of the winning candidate.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the election does not exist or has not ended yet.
     #[view(results)]
     fn results(&self, election_id: Election_ID) -> Candidate_ID {
         require!(self.election_id_list().contains(&election_id), "Election does not exist");
         require!(self.election_data(election_id).get().end_time > self.blockchain().get_block_timestamp(), "Election has not ended yet");
 
+        if !self.finished_election(election_id).get() {
+            let vote_counts = match self.election_data(election_id).get().election_type {
+                ElectionType::Plurality => self.evaluate_plurality_or_approval(election_id),
+                ElectionType::Approval => self.evaluate_plurality_or_approval(election_id),
+                ElectionType::SingleTransferableVote => self.evaluate_single_transferable_vote(election_id),
+            };
 
 
-        let vote_counts = match self.election_data(election_id).get().election_type {
-            ElectionType::Plurality => self.evaluate_plurality_or_approval(election_id),
-            ElectionType::Approval => self.evaluate_plurality_or_approval(election_id),
-            ElectionType::SingleTransferableVote => self.evaluate_single_transferable_vote(election_id),
-        };
+            for result in vote_counts.iter() {
+                self.result_vector(election_id, result.candidate).set(&result.count);
+            }
+            self.finished_election(election_id).set(&true);
+        }
+
+        let vote_counts : ManagedVec<VotingResult> = self.candidate_id_list(election_id).iter().map(|c_id| VotingResult {candidate: c_id, count: self.result_vector(election_id, c_id).get()}).collect();
 
         // find the candidate with the most votes
 
@@ -201,6 +287,9 @@ pub trait BackendSc {
 
     
 
+    /// Generates a unique election ID.
+
+    /// This function generates a random election ID and ensures that it is not already in use.
     fn generate_election_id(&self) -> Election_ID {
 
         let mut rand_source = RandomnessSource::new();
@@ -212,17 +301,25 @@ pub trait BackendSc {
         }
     }
 
+    /// Generates a unique candidate ID for the given election.
+
+    /// This function generates a random candidate ID and ensures that it is not already in use
+    /// by either the list of candidates or the list of potential candidates for the given election.
     fn generate_candidate_id(&self, election_id: Election_ID) -> Candidate_ID {
 
         let mut rand_source = RandomnessSource::new();
         loop {
             let candidate_id = rand_source.next_u64() as Candidate_ID;
-            if !self.candidate_id_list(election_id).contains(&candidate_id) {
+            if !self.candidate_id_list(election_id).contains(&candidate_id) && !self.potential_candidate_id_list(election_id).contains(&candidate_id) {
                 return candidate_id;
             }
         }
     }
 
+    /// Generates a unique dispute ID for the given election.
+    ///
+    /// This function generates a random dispute ID and ensures that it is not already in use by
+    /// the list of disputes for the given election.
     fn generate_dispute_id(&self, election_id: Election_ID) -> Dispute_ID {
 
         let mut rand_source = RandomnessSource::new();
@@ -270,11 +367,21 @@ pub trait BackendSc {
 
 
     #[endpoint(submitCandidancy)]
+    #[payable("EGLD")]
     fn submit_candidancy(&self, election_id: Election_ID, name: ManagedBuffer, description: ManagedBuffer) -> Candidate_ID {
     
         require!(self.election_id_list().contains(&election_id), "Election does not exist");
         require!(self.election_data(election_id).get().ended == false, "Election has already ended");
         require!(self.election_data(election_id).get().start_time < self.blockchain().get_block_timestamp(), "Election has started");
+
+
+        // manage fee
+        let payment_amount = self.call_value().egld_value().clone_value();
+        let candidate_fee = self.candidate_fee().get();
+        require!(payment_amount >= candidate_fee, "Not enough EGLD");
+
+        self.send().direct_egld(&self.election_data(election_id).get().admin, &self.candidate_fee().get());
+
 
         require!(name.len() > 0, "Name cannot be empty");
         require!(name.len() <= 50, "Name cannot be longer than 50 characters");
@@ -308,6 +415,10 @@ pub trait BackendSc {
 
     }
 
+    fn verification_logic(&self, election_id: Election_ID, verification_data: ManagedBuffer) -> bool{
+        return verification_data.len() > 8;
+    }
+
     #[endpoint(registerSelf)]
     fn register_self(&self, election_id: Election_ID, verification_data: ManagedBuffer) {
 
@@ -319,7 +430,7 @@ pub trait BackendSc {
         require!(!self.registered_voters(election_id).contains(&voter_address), "Already registered");
 
         // perform verification logic here
-        require!(verification_data.len() > 8, "Invalid verification data");
+        require!(self.verification_logic(election_id, verification_data), "Invalid verification data");
 
         // register the voter
         self.registered_voters(election_id).insert(self.blockchain().get_caller());
@@ -361,6 +472,7 @@ pub trait BackendSc {
         }
         let x = Vote {candidates: vote.to_vec()};
         self.votes(election_id).insert(x);
+        self.voter_eligible(election_id, self.blockchain().get_caller()).set(&false);
     }
 
     #[endpoint(endElection)]
@@ -395,25 +507,11 @@ pub trait BackendSc {
         return dispute_id;
     }
 
-    // #[endpoint(signCandidate)]
-    // fn sign_candidate(&self) -> ManagedAddress {
-    //     return self.blockchain().get_caller();
-    // }
-
     // #[endpoint(resolveDispute)]
     // fn resolve_dispute(&self) -> ManagedAddress {
     //     return self.blockchain().get_caller();
     // }
 
-    // #[endpoint(validateCandidate)]
-    // fn validate_candidate(&self) -> ManagedAddress {
-    //     return self.blockchain().get_caller();
-    // }
-
-    // #[endpoint(eligibilityCheck)]
-    // fn eligibility_check(&self) -> ManagedAddress {
-    //     return self.blockchain().get_caller();
-    // }
 
 
 }
