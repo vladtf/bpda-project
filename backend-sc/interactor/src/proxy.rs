@@ -43,12 +43,16 @@ where
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn init(
+    pub fn init<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
         self,
+        candidate_fee: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
+            .argument(&candidate_fee)
             .original_result()
     }
 }
@@ -81,6 +85,28 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn candidate_fee(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getCandidateFee")
+            .original_result()
+    }
+
+    pub fn update_candidate_fee<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        candidate_fee: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("updateCandidateFee")
+            .argument(&candidate_fee)
+            .original_result()
+    }
+
     pub fn election_id_list(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, u64>> {
@@ -112,6 +138,19 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getRegisteredVoters")
+            .argument(&election_id)
+            .original_result()
+    }
+
+    pub fn potential_candidate_id_list<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        election_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, u16>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getPotentialCandidateIDs")
             .argument(&election_id)
             .original_result()
     }
@@ -187,6 +226,40 @@ where
             .original_result()
     }
 
+    pub fn result_vector<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<u16>,
+    >(
+        self,
+        election_id: Arg0,
+        candidate_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("result_vector")
+            .argument(&election_id)
+            .argument(&candidate_id)
+            .original_result()
+    }
+
+    /// Determines the winning candidate of an election based on its type. 
+    ///  
+    /// This function verifies that the specified election has ended and then evaluates 
+    /// the votes according to the election type. It supports Plurality, Approval, and  
+    /// Single Transferable Vote election types. The function returns the candidate ID  
+    /// with the highest number of votes. 
+    ///  
+    /// # Arguments 
+    ///  
+    /// * `election_id` - The identifier of the election whose results should be computed. 
+    ///  
+    /// # Returns 
+    ///  
+    /// The candidate ID of the winning candidate. 
+    ///  
+    /// # Panics 
+    ///  
+    /// Panics if the election does not exist or has not ended yet. 
     pub fn results<
         Arg0: ProxyArg<u64>,
     >(
@@ -234,7 +307,7 @@ where
             .original_result()
     }
 
-    pub fn register_candidate<
+    pub fn submit_candidancy<
         Arg0: ProxyArg<u64>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg2: ProxyArg<ManagedBuffer<Env::Api>>,
@@ -243,13 +316,44 @@ where
         election_id: Arg0,
         name: Arg1,
         description: Arg2,
+    ) -> TxTypedCall<Env, From, To, (), Gas, u16> {
+        self.wrapped_tx
+            .raw_call("submitCandidancy")
+            .argument(&election_id)
+            .argument(&name)
+            .argument(&description)
+            .original_result()
+    }
+
+    pub fn register_candidate<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<u16>,
+    >(
+        self,
+        election_id: Arg0,
+        candidate_id: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u16> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("registerCandidate")
             .argument(&election_id)
-            .argument(&name)
-            .argument(&description)
+            .argument(&candidate_id)
+            .original_result()
+    }
+
+    pub fn register_self<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        election_id: Arg0,
+        verification_data: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("registerSelf")
+            .argument(&election_id)
+            .argument(&verification_data)
             .original_result()
     }
 
@@ -319,7 +423,7 @@ where
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode)]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, Debug)]
 pub struct ElectionData<Api>
 where
     Api: ManagedTypeApi,
@@ -334,25 +438,27 @@ where
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, PartialEq)]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, PartialEq, Debug)]
 pub enum ElectionType {
+    #[default]
     Plurality,
     Approval,
     SingleTransferableVote,
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem)]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem, Debug)]
 pub struct Candidate<Api>
 where
     Api: ManagedTypeApi,
 {
     pub name: ManagedBuffer<Api>,
     pub description: ManagedBuffer<Api>,
+    pub creator: ManagedAddress<Api>,
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem, Clone)]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem, Clone, Debug)]
 pub struct Vote<Api>
 where
     Api: ManagedTypeApi,
@@ -361,7 +467,7 @@ where
 }
 
 #[type_abi]
-#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem)]
+#[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem, Debug)]
 pub struct Dispute<Api>
 where
     Api: ManagedTypeApi,

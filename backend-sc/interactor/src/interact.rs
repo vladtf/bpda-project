@@ -23,18 +23,24 @@ pub async fn backend_sc_cli() {
     match cmd.as_str() {
         "deploy" => interact.deploy().await,
         "upgrade" => interact.upgrade().await,
+        "getCandidateFee" => interact.candidate_fee().await,
+        "updateCandidateFee" => interact.update_candidate_fee().await,
         "getElectionIDList" => interact.election_id_list().await,
         "getElectionData" => interact.election_data().await,
         "getRegisteredVoters" => interact.registered_voters().await,
+        "getPotentialCandidateIDs" => interact.potential_candidate_id_list().await,
         "getCandidateIDs" => interact.candidate_id_list().await,
         "getCandidate" => interact.candidate().await,
         "getVotes" => interact.votes().await,
         "getDisputeIDList" => interact.dispute_id_list().await,
         "getDispute" => interact.dispute().await,
+        "result_vector" => interact.result_vector().await,
         "results" => interact.results().await,
         "electionList" => interact.election_list().await,
         "registerElection" => interact.register_election().await,
+        "submitCandidancy" => interact.submit_candidancy().await,
         "registerCandidate" => interact.register_candidate().await,
+        "registerSelf" => interact.register_self().await,
         "registerVoter" => interact.register_voter().await,
         "vote" => interact.vote().await,
         "endElection" => interact.end_election().await,
@@ -100,6 +106,15 @@ impl ContractInteract {
         interactor.set_current_dir_from_workspace("backend_sc");
         let wallet_address = interactor.register_wallet(test_wallets::alice()).await;
 
+        let pem_path = if cfg!(target_family = "windows") {
+            Path::new(r"E:\Facultate\master\an1\BPDA\lab\intro\new_wallet.pem")
+        } else {
+            Path::new(r"/mnt/e/Facultate/master/an1/BPDA/lab/intro/new_wallet.pem")
+        };
+        let pem = std::fs::read_to_string(pem_path).expect("Failed to read PEM file");
+        let wallet = Wallet::from_pem_file_contents(pem).expect("Invalid PEM file");
+        let wallet_address = interactor.register_wallet(wallet.clone()).await;
+
         // Useful in the chain simulator setting
         // generate blocks until ESDTSystemSCAddress is enabled
         interactor.generate_blocks_until_epoch(1).await.unwrap();
@@ -118,13 +133,15 @@ impl ContractInteract {
     }
 
     pub async fn deploy(&mut self) {
+        let candidate_fee = BigUint::<StaticApi>::from(0u128);
+
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(30_000_000u64)
             .typed(proxy::BackendScProxy)
-            .init()
+            .init(candidate_fee)
             .code(&self.contract_code)
             .returns(ReturnsNewAddress)
             .run()
@@ -148,6 +165,38 @@ impl ContractInteract {
             .code(&self.contract_code)
             .code_metadata(CodeMetadata::UPGRADEABLE)
             .returns(ReturnsNewAddress)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn candidate_fee(&mut self) {
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .candidate_fee()
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn update_candidate_fee(&mut self) {
+        let candidate_fee = BigUint::<StaticApi>::from(0u128);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .update_candidate_fee(candidate_fee)
+            .returns(ReturnsResultUnmanaged)
             .run()
             .await;
 
@@ -200,6 +249,22 @@ impl ContractInteract {
         println!("Result: {result_value:?}");
     }
 
+    pub async fn potential_candidate_id_list(&mut self) {
+        let election_id = 0u64;
+
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .potential_candidate_id_list(election_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
     pub async fn candidate_id_list(&mut self) {
         let election_id = 0u64;
 
@@ -230,7 +295,13 @@ impl ContractInteract {
             .run()
             .await;
 
-        println!("Result: {result_value:?}");
+        let name = result_value.name;
+        let description = result_value.description;
+        
+        
+        println!("Name: {}", name);
+        println!("Description: {}", description);
+        
     }
 
     pub async fn votes(&mut self) {
@@ -275,6 +346,23 @@ impl ContractInteract {
             .to(self.state.current_address())
             .typed(proxy::BackendScProxy)
             .dispute(election_id, dispute_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {result_value:?}");
+    }
+
+    pub async fn result_vector(&mut self) {
+        let election_id = 0u64;
+        let candidate_id = 0u16;
+
+        let result_value = self
+            .interactor
+            .query()
+            .to(self.state.current_address())
+            .typed(proxy::BackendScProxy)
+            .result_vector(election_id, candidate_id)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -334,7 +422,9 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn register_candidate(&mut self) {
+    pub async fn submit_candidancy(&mut self) {
+        let egld_amount = BigUint::<StaticApi>::from(0u128);
+
         let election_id = 0u64;
         let name = ManagedBuffer::new_from_bytes(&b""[..]);
         let description = ManagedBuffer::new_from_bytes(&b""[..]);
@@ -346,7 +436,46 @@ impl ContractInteract {
             .to(self.state.current_address())
             .gas(30_000_000u64)
             .typed(proxy::BackendScProxy)
-            .register_candidate(election_id, name, description)
+            .submit_candidancy(election_id, name, description)
+            .egld(egld_amount)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn register_candidate(&mut self) {
+        let election_id = 0u64;
+        let candidate_id = 0u16;
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .register_candidate(election_id, candidate_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn register_self(&mut self) {
+        let election_id = 0u64;
+        let verification_data = ManagedBuffer::new_from_bytes(&b""[..]);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::BackendScProxy)
+            .register_self(election_id, verification_data)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -423,79 +552,6 @@ impl ContractInteract {
             .gas(30_000_000u64)
             .typed(proxy::BackendScProxy)
             .make_dispute(election_id, dispute_name, dispute_description)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-}
-
-
-    pub async fn end_election(&mut self) {
-        let election_id = 0u64;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::BackendScProxy)
-            .end_election(election_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn make_dispute(&mut self) {
-        let election_id = 0u64;
-        let dispute_name = ManagedBuffer::new_from_bytes(&b""[..]);
-        let dispute_description = ManagedBuffer::new_from_bytes(&b""[..]);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::BackendScProxy)
-            .make_dispute(election_id, dispute_name, dispute_description)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn resolve_dispute(&mut self) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::BackendScProxy)
-            .resolve_dispute()
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn validate_candidate(&mut self) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::BackendScProxy)
-            .validate_candidate()
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;

@@ -1,11 +1,11 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.83.0",
-            "commitHash": "90b35a6239c3d8bdabc530a6a0816f7ff89a0aaf",
-            "commitDate": "2024-11-26",
+            "version": "1.81.0",
+            "commitHash": "eeb90cda1969383f56a2637cbd3037bdf598841c",
+            "commitDate": "2024-09-04",
             "channel": "Stable",
-            "short": "rustc 1.83.0 (90b35a623 2024-11-26)"
+            "short": "rustc 1.81.0 (eeb90cda1 2024-09-04)"
         },
         "contractCrate": {
             "name": "backend-sc",
@@ -21,7 +21,12 @@
     ],
     "name": "BackendSc",
     "constructor": {
-        "inputs": [],
+        "inputs": [
+            {
+                "name": "candidate_fee",
+                "type": "BigUint"
+            }
+        ],
         "outputs": []
     },
     "upgradeConstructor": {
@@ -29,6 +34,27 @@
         "outputs": []
     },
     "endpoints": [
+        {
+            "name": "getCandidateFee",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "updateCandidateFee",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "candidate_fee",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
         {
             "name": "getElectionIDList",
             "mutability": "readonly",
@@ -67,6 +93,22 @@
             "outputs": [
                 {
                     "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getPotentialCandidateIDs",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<u16>",
                     "multi_result": true
                 }
             ]
@@ -158,6 +200,45 @@
             ]
         },
         {
+            "name": "result_vector",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "candidate_id",
+                    "type": "u16"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Determines the winning candidate of an election based on its type.",
+                "",
+                "This function verifies that the specified election has ended and then evaluates",
+                "the votes according to the election type. It supports Plurality, Approval, and ",
+                "Single Transferable Vote election types. The function returns the candidate ID ",
+                "with the highest number of votes.",
+                "",
+                "# Arguments",
+                "",
+                "* `election_id` - The identifier of the election whose results should be computed.",
+                "",
+                "# Returns",
+                "",
+                "The candidate ID of the winning candidate.",
+                "",
+                "# Panics",
+                "",
+                "Panics if the election does not exist or has not ended yet."
+            ],
             "name": "results",
             "mutability": "readonly",
             "inputs": [
@@ -215,8 +296,11 @@
             ]
         },
         {
-            "name": "registerCandidate",
+            "name": "submitCandidancy",
             "mutability": "mutable",
+            "payableInTokens": [
+                "EGLD"
+            ],
             "inputs": [
                 {
                     "name": "election_id",
@@ -236,6 +320,40 @@
                     "type": "u16"
                 }
             ]
+        },
+        {
+            "name": "registerCandidate",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "candidate_id",
+                    "type": "u16"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u16"
+                }
+            ]
+        },
+        {
+            "name": "registerSelf",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "verification_data",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
         },
         {
             "name": "registerVoter",
@@ -303,6 +421,17 @@
             ]
         }
     ],
+    "events": [
+        {
+            "identifier": "ElectionCreated",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                }
+            ]
+        }
+    ],
     "esdtAttributes": [],
     "hasCallback": false,
     "types": {
@@ -316,6 +445,10 @@
                 {
                     "name": "description",
                     "type": "bytes"
+                },
+                {
+                    "name": "creator",
+                    "type": "Address"
                 }
             ]
         },

@@ -12,7 +12,7 @@ path = "src/interactor_main.rs"
 [lib]
 path = "src/interact.rs"
 
-[dependencies.backend_sc]
+[dependencies.backend-sc]
 path = ".."
 
 [dependencies.multiversx-sc-snippets]
