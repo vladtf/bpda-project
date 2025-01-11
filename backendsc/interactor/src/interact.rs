@@ -195,23 +195,46 @@ async fn call_register_election(interact: &mut ContractInteract, mut args: std::
         Ok(election_type) => election_type,
         Err(e) => {println!("Error parsing election type: {}", e); return;}
     };
-    let start_time_str = args.next().expect("start time required; format: YYYY-MM-DD HH:MM:SS");
-    let start_time = chrono::DateTime::parse_from_rfc3339(start_time_str)
-        .expect("invalid start time; format: YYYY-MM-DD HH:MM:SS")
-        .timestamp() as u64;
+    let start_time = match args.next() {
+        Some(start_time_str) => match chrono::DateTime::parse_from_rfc3339(start_time_str) {
+            Ok(dt) => dt.timestamp() as u64,
+            Err(_) => {println!("invalid start time; format: YYYY-MM-DD HH:MM:SS"); return;},
+        },
+        None => {println!("start time required; format: YYYY-MM-DD HH:MM:SS"); return;},
+    };
 
-    let end_time_str = args.next().expect("end time required; format: YYYY-MM-DD HH:MM:SS");
-    let end_time = chrono::DateTime::parse_from_rfc3339(end_time_str)
-        .expect("invalid end time; format: YYYY-MM-DD HH:MM:SS")
-        .timestamp() as u64;
+    let end_time = match args.next() {
+        Some(end_time_str) => match chrono::DateTime::parse_from_rfc3339(end_time_str) {
+            Ok(dt) => dt.timestamp() as u64,
+            Err(_) => {println!("invalid end time; format: YYYY-MM-DD HH:MM:SS");return;},
+        },
+        None => {println!("end time required; format: YYYY-MM-DD HH:MM:SS"); return ;},
+    };
     interact.register_election(name, description, election_type, start_time, end_time).await;
 }
 
 async fn call_submit_candidancy(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
-    let name = args.next().expect("name required");
-    let description = args.next().expect("description required");
+    let election_id = match get_value::<u64>(&mut args) {
+        Ok(election_id) => election_id,
+        Err(e) => {
+            println!("Error parsing election id: {}", e);
+            return ;
+        }
+    };
+    let candidate_name = match args.next() {
+        Some(candidate_name) => candidate_name,
+        None => {
+            println!("candidate name required");
+            return;
+        }
+    };
+    let candidate_description = match args.next() {
+        Some(candidate_description) => candidate_description,
+        None => {
+            println!("candidate description required");
+            return;
+        }
+    };
     let candidate_fee = match get_biguint(&mut args) {
         Ok(candidate_fee) => candidate_fee,
         Err(e) => {
@@ -220,7 +243,7 @@ async fn call_submit_candidancy(interact: &mut ContractInteract, mut args: std::
         }
     };
     
-    interact.submit_candidancy(election_id, name, description, candidate_fee).await;
+    interact.submit_candidancy(election_id, candidate_name, candidate_description, candidate_fee).await;
 }
 
 async fn call_register_candidate(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
@@ -231,32 +254,53 @@ async fn call_register_candidate(interact: &mut ContractInteract, mut args: std:
 }
 
 async fn call_register_self(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
-    let verification_data = args.next().expect("verification data required");
+    let election_id = match get_value::<u64>(&mut args) {
+        Ok(election_id) => election_id,
+        Err(e) => {println!("Error parsing election id: {}", e); return;}
+    };
+    let verification_data = match args.next() {
+        Some(verification_data) => verification_data,
+        None => {println!("verification data required"); return;}
+    };
     
     interact.register_self(election_id, verification_data).await;
 }
 
 async fn call_register_voter(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
     
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
+    let election_id = match get_value::<u64>(&mut args) {
+        Ok(election_id) => election_id,
+        Err(e) => {println!("Error parsing election id: {}", e); return;}
+    };
     
-    let voter_address = args.next().expect("voter address required");
+    let voter_address = match args.next() {
+        Some(voter_address) => voter_address,
+        None => {println!("voter address required"); return;}
+    };
     
     interact.register_voter(election_id, voter_address).await;
 }
 
 async fn call_vote(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
 
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
+    let election_id = match get_value::<u64>(&mut args) {
+        Ok(election_id) => election_id,
+        Err(e) => {println!("Error parsing election id: {}", e); return;}
+    };
 
-    let votes: Vec<u16> = args.map(|arg| arg.parse().expect("invalid vote")).collect();
+    let mut choices = Vec::new();
+    for arg in args {
+        match arg.parse::<u16>() {
+            Ok(choice) => choices.push(choice),
+            Err(e) => {
+                println!("Error parsing vote: {}", e);
+                return;
+            }
+        }
+    }
 
     
-    interact.vote(election_id, votes).await;
+    interact.vote(election_id, choices).await;
 }
 
 async fn call_end_election(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
@@ -266,12 +310,20 @@ async fn call_end_election(interact: &mut ContractInteract, mut args: std::str::
 async fn call_make_dispute(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
     
 
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
+    let election_id = match get_value::<u64>(&mut args) {
+        Ok(election_id) => election_id,
+        Err(e) => {println!("Error parsing election id: {}", e); return;}
+    };
 
-    let dispute_name = args.next().expect("dispute name required");
+    let dispute_name = match args.next() {
+        Some(dispute_name) => dispute_name,
+        None => {println!("dispute name required"); return;}
+    };
     
-    let dispute_description = args.next().expect("dispute description required");
+    let dispute_description = match args.next() {
+        Some(dispute_description) => dispute_description,
+        None => {println!("dispute description required"); return;}
+    };
 
     
     interact.make_dispute(election_id, dispute_name, dispute_description).await;
