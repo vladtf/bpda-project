@@ -161,11 +161,11 @@ async fn call_get_dispute_id_list(interact: &mut ContractInteract, mut args: std
 }
 
 async fn call_get_dispute(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    let election_id = match get_value::<u64>(args) {
+    let election_id = match get_value::<u64>(&mut args) {
         Ok(election_id) => election_id,
         Err(e) => {println!("Error parsing election id: {}", e); return;}
     };
-    let dispute_id = match get_value::<u16>(args) {
+    let dispute_id = match get_value::<u16>(&mut args) {
         Ok(dispute_id) => dispute_id,
         Err(e) => {println!("Error parsing dispute id: {}", e); return;}
     };
@@ -192,15 +192,19 @@ async fn call_register_election(interact: &mut ContractInteract, mut args: std::
         Some(description) => description,
         None => {println!("description required"); return;}
     };
-    let election_type = match get_value(args) {
+    let election_type = match get_value(&mut args) {
         Ok(election_type) => election_type,
         Err(e) => {println!("Error parsing election type: {}", e); return;}
     };
-    let start_time = args.next().expect("start time required; format: YYYY-MM-DD HH:MM:SS");
-    let start_time = 
-    let start_time: u64 = start_time.parse().expect("invalid start time");
-    let end_time = args.next().expect("end time required");
-    let end_time: u64 = end_time.parse().expect("invalid end time");
+    let start_time_str = args.next().expect("start time required; format: YYYY-MM-DD HH:MM:SS");
+    let start_time = chrono::DateTime::parse_from_rfc3339(start_time_str)
+        .expect("invalid start time")
+        .timestamp() as u64;
+
+    let end_time_str = args.next().expect("end time required");
+    let end_time = chrono::DateTime::parse_from_rfc3339(end_time_str)
+        .expect("invalid end time")
+        .timestamp() as u64;
     interact.register_election(name, description, election_type, start_time, end_time).await;
 }
 
