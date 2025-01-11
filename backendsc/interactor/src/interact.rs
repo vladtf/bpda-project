@@ -197,12 +197,12 @@ async fn call_register_election(interact: &mut ContractInteract, mut args: std::
     };
     let start_time_str = args.next().expect("start time required; format: YYYY-MM-DD HH:MM:SS");
     let start_time = chrono::DateTime::parse_from_rfc3339(start_time_str)
-        .expect("invalid start time")
+        .expect("invalid start time; format: YYYY-MM-DD HH:MM:SS")
         .timestamp() as u64;
 
-    let end_time_str = args.next().expect("end time required");
+    let end_time_str = args.next().expect("end time required; format: YYYY-MM-DD HH:MM:SS");
     let end_time = chrono::DateTime::parse_from_rfc3339(end_time_str)
-        .expect("invalid end time")
+        .expect("invalid end time; format: YYYY-MM-DD HH:MM:SS")
         .timestamp() as u64;
     interact.register_election(name, description, election_type, start_time, end_time).await;
 }
