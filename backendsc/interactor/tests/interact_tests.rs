@@ -9,5 +9,5 @@ use rust_interact::ContractInteract;
 async fn deploy_test_backendsc() {
     let mut interactor = ContractInteract::new().await;
 
-    interactor.deploy().await;
+    interactor.deploy(BigUint::from(1u64)).await;
 }

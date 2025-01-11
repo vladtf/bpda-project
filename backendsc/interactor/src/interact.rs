@@ -7,8 +7,9 @@ use config::Config;
 use multiversx_sc_snippets::imports::*;
 use serde::{Deserialize, Serialize};
 use std::{
-    future, io::{self, Read}, path::Path
+    io::{self, Read, Write}, path::Path
 };
+use chrono::{DateTime, Utc};
 use num_bigint;
 const STATE_FILE: &str = "state.toml";
 
@@ -18,23 +19,25 @@ pub async fn backendsc_cli() {
     let mut input = String::new();
 
     let mut interact = ContractInteract::new().await;
-
     loop {
-        input.clear();
         print!("> ");
+        io::stdout().flush().unwrap();
+        input.clear();
+        
         io::stdin().read_line(&mut input).unwrap();
-        if input.is_empty() {
+        
+        if input.trim().is_empty() {
             break;
         }
-        let mut args = input.split_whitespace();
+        let mut args = input.trim().split_whitespace();
         let cmd = args.next().expect("at least one argument required");
 
         match cmd {
             "deploy" => call_deploy(&mut interact, &mut args).await,
-            "upgrade" => call_upgrade(&mut interact, args).await,
-            "getCandidateFee" => call_get_candidate_fee(&mut interact, args).await,
-            "updateCandidateFee" => call_update_candidate_fee(&mut interact, args).await,
-            "getElectionIDList" => call_get_election_id_list(&mut interact, args).await,
+            "upgrade" => call_upgrade(&mut interact, &mut args).await,
+            "getCandidateFee" => interact.candidate_fee().await,
+            "updateCandidateFee" => call_update_candidate_fee(&mut interact, &mut args).await,
+            "getElectionIDList" => interact.election_id_list().await,
             "getElectionData" => call_get_election_data(&mut interact, args).await,
             "getRegisteredVoters" => call_get_registered_voters(&mut interact, args).await,
             "getPotentialCandidateIDs" => call_get_potential_candidate_id_list(&mut interact, args).await,
@@ -45,7 +48,7 @@ pub async fn backendsc_cli() {
             "getDispute" => call_get_dispute(&mut interact, args).await,
             "result_vector" => call_result_vector(&mut interact, args).await,
             "results" => call_results(&mut interact, args).await,
-            "electionList" => call_election_list(&mut interact, args).await,
+            "electionList" => interact.election_list().await,
             "registerElection" => call_register_election(&mut interact, args).await,
             "submitCandidancy" => call_submit_candidancy(&mut interact, args).await,
             "registerCandidate" => call_register_candidate(&mut interact, args).await,
@@ -57,6 +60,7 @@ pub async fn backendsc_cli() {
             "exit" => break,
             _ => println!("unknown command {}", cmd),
         }
+
     }
 }
 
@@ -83,12 +87,8 @@ async fn call_deploy(interact: &mut ContractInteract, args: &mut std::str::Split
     interact.deploy(candidate_fee).await;
 }
 
-async fn call_upgrade(interact: &mut ContractInteract, args: &mut std::str::SplitWhitespace<'_>) {
+async fn call_upgrade(interact: &mut ContractInteract, _: &mut std::str::SplitWhitespace<'_>) {
     interact.upgrade().await;
-}
-
-async fn call_get_candidate_fee(interact: &mut ContractInteract, args: &mut std::str::SplitWhitespace<'_>) {
-    interact.candidate_fee().await;
 }
 
 async fn call_update_candidate_fee(interact: &mut ContractInteract, args: &mut  std::str::SplitWhitespace<'_>) {
@@ -102,11 +102,6 @@ async fn call_update_candidate_fee(interact: &mut ContractInteract, args: &mut  
     interact.update_candidate_fee(candidate_fee).await;
 }
 
-async fn call_get_election_id_list(interact: &mut ContractInteract, args: &mut std::str::SplitWhitespace<'_>) {
-    interact.election_id_list().await;
-}
-
-
 async fn call_on_election_id<F, T>( args: &mut  std::str::SplitWhitespace<'_>, on_election_id: F ) 
 where F: FnOnce(u64, &mut std::str::SplitWhitespace<'_>) -> T, 
       T: std::future::Future<Output=()>
@@ -119,79 +114,90 @@ where F: FnOnce(u64, &mut std::str::SplitWhitespace<'_>) -> T,
 }
 
 
+async fn call_on_election_id_and_candidate_id<F, T>( args: &mut  std::str::SplitWhitespace<'_>, on_election_id_and_candidate_id: F ) 
+where F: FnOnce(u64, u16, &mut std::str::SplitWhitespace<'_>) -> T, 
+      T: std::future::Future<Output=()>
+{
+    let election_id = match get_value::<u64>(args) {
+        Ok(election_id) => election_id,
+        Err(e) => {println!("Error parsing election id: {}", e); return;}
+    };
+    let candidate_id = match get_value::<u16>(args) {
+        Ok(candidate_id) => candidate_id,
+        Err(e) => {println!("Error parsing candidate id: {}", e); return;}
+    };
+    on_election_id_and_candidate_id(election_id, candidate_id, args).await;
+}
+
 async fn call_get_election_data(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    call_on_election_id(&mut args, |election_id, _| interact.election_data(election_id));
+    call_on_election_id(&mut args, |election_id, _| interact.election_data(election_id)).await;
 }
 
 async fn call_get_registered_voters(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    call_on_election_id(&mut args, |election_id, _| interact.registered_voters(election_id));
+    call_on_election_id(&mut args, |election_id, _| interact.registered_voters(election_id)).await;
 }
 
 async fn call_get_potential_candidate_id_list(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    call_on_election_id(&mut args, |election_id, _| interact.potential_candidate_id_list(election_id));
+    call_on_election_id(&mut args, |election_id, _| interact.potential_candidate_id_list(election_id)).await;
 }
 
 async fn call_get_candidate_id_list(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    call_on_election_id(&mut args, |election_id, _| interact.candidate_id_list(election_id));
+    call_on_election_id(&mut args, |election_id, _| interact.candidate_id_list(election_id)).await;
 }
 
 async fn call_get_candidate(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    call_on_election_id(&mut args, |election_id, args| {
-        let candidate_id = match get_value::<u16>(args) {
-            Ok(candidate_id) => candidate_id,
-            Err(e) => {println!("Error parsing candidate id: {}", e); return ();}
-        };
-        interact.candidate(election_id, candidate_id);
-    } );
-
-
-
+    call_on_election_id_and_candidate_id(&mut args, 
+        |election_id, candidate_id, _| 
+        interact.candidate(election_id, candidate_id)
+    ).await;
 }
 
 async fn call_get_votes(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
-    interact.votes(election_id).await;
+    call_on_election_id(&mut args, |election_id, _| interact.votes(election_id)).await;
 }
 
 async fn call_get_dispute_id_list(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
-    interact.dispute_id_list(election_id).await;
+    call_on_election_id(&mut args, |election_id, _| interact.dispute_id_list(election_id)).await;
 }
 
 async fn call_get_dispute(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
-    let dispute_id = args.next().expect("dispute id required");
-    let dispute_id: u16 = dispute_id.parse().expect("invalid dispute id");
+    let election_id = match get_value::<u64>(args) {
+        Ok(election_id) => election_id,
+        Err(e) => {println!("Error parsing election id: {}", e); return;}
+    };
+    let dispute_id = match get_value::<u16>(args) {
+        Ok(dispute_id) => dispute_id,
+        Err(e) => {println!("Error parsing dispute id: {}", e); return;}
+    };
     interact.dispute(election_id, dispute_id).await;
 }
 
 async fn call_result_vector(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
-    let candidate_id = args.next().expect("candidate id required");
-    let candidate_id: u16 = candidate_id.parse().expect("invalid candidate id");
-    interact.result_vector(election_id, candidate_id).await;
+    call_on_election_id_and_candidate_id(&mut args, 
+        |election_id, candidate_id, _| 
+        interact.result_vector(election_id, candidate_id)
+    ).await;
 }
 
 async fn call_results(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
-    interact.results(election_id).await;
-}
-
-async fn call_election_list(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    interact.election_list().await;
+    call_on_election_id(&mut args, |election_id, _| interact.results(election_id)).await;
 }
 
 async fn call_register_election(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    let name = args.next().expect("name required");
-    let description = args.next().expect("description required");
-    let election_type = args.next().expect("election type required");
-    let election_type: u64 = election_type.parse().expect("invalid election type");
-    let start_time = args.next().expect("start time required");
+    let name = match args.next() {
+        Some(name) => name,
+        None => {println!("name required"); return;}
+    };
+    let description = match args.next() {
+        Some(description) => description,
+        None => {println!("description required"); return;}
+    };
+    let election_type = match get_value(args) {
+        Ok(election_type) => election_type,
+        Err(e) => {println!("Error parsing election type: {}", e); return;}
+    };
+    let start_time = args.next().expect("start time required; format: YYYY-MM-DD HH:MM:SS");
+    let start_time = 
     let start_time: u64 = start_time.parse().expect("invalid start time");
     let end_time = args.next().expect("end time required");
     let end_time: u64 = end_time.parse().expect("invalid end time");
@@ -203,7 +209,7 @@ async fn call_submit_candidancy(interact: &mut ContractInteract, mut args: std::
     let election_id: u64 = election_id.parse().expect("invalid election id");
     let name = args.next().expect("name required");
     let description = args.next().expect("description required");
-    let candidate_fee = match get_biguint(args) {
+    let candidate_fee = match get_biguint(&mut args) {
         Ok(candidate_fee) => candidate_fee,
         Err(e) => {
             println!("Error parsing candidate fee: {}", e);
@@ -215,13 +221,10 @@ async fn call_submit_candidancy(interact: &mut ContractInteract, mut args: std::
 }
 
 async fn call_register_candidate(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-    let election_id = args.next().expect("election id required");
-    let election_id: u64 = election_id.parse().expect("invalid election id");
-    let candidate_id = args.next().expect("candidate id required");
-    let candidate_id: u16 = candidate_id.parse().expect("invalid candidate id");
-    
-    
-    interact.register_candidate(election_id, candidate_id).await;
+    call_on_election_id_and_candidate_id(&mut args, 
+        |election_id, candidate_id, _| 
+        interact.register_candidate(election_id, candidate_id)
+    ).await;
 }
 
 async fn call_register_self(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
@@ -250,19 +253,25 @@ async fn call_vote(interact: &mut ContractInteract, mut args: std::str::SplitWhi
     let votes: Vec<u16> = args.map(|arg| arg.parse().expect("invalid vote")).collect();
 
     
-    interact.vote().await;
+    interact.vote(election_id, votes).await;
 }
 
 async fn call_end_election(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
-
-    interact.end_election().await;
+    call_on_election_id(&mut args, |election_id, _| interact.end_election(election_id)).await;
 }
 
 async fn call_make_dispute(interact: &mut ContractInteract, mut args: std::str::SplitWhitespace<'_>) {
     
 
+    let election_id = args.next().expect("election id required");
+    let election_id: u64 = election_id.parse().expect("invalid election id");
+
+    let dispute_name = args.next().expect("dispute name required");
     
-    interact.make_dispute().await;
+    let dispute_description = args.next().expect("dispute description required");
+
+    
+    interact.make_dispute(election_id, dispute_name, dispute_description).await;
 }
 
 
