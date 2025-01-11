@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use std::{
     io::{self, Read, Write}, path::Path
 };
-use chrono::{DateTime, Utc};
 use num_bigint;
 const STATE_FILE: &str = "state.toml";
 
