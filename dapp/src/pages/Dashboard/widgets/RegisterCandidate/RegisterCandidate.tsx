@@ -1,26 +1,33 @@
 import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
-import axios from 'axios';
-import { API_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
+import { Candidate, useSendPingPongTransaction } from 'hooks';
+import { SessionEnum } from 'localConstants';
 
 export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
   const [electionId, setElectionId] = useState<string>('');
-  const [name, setName] = useState<string>('');
-  const [manifesto, setManifesto] = useState<string>('');
-  const [feePaid, setFeePaid] = useState<boolean>(false);
+  const [candidateId, setCandidateId] = useState<string>('');
   const [response, setResponse] = useState<any>(null);
-  const [elections, setElections] = useState<any[]>([]);
+  const [elections, setElections] = useState<string[]>([]);
+  const [potentialCandidates, setPotentialCandidates] = useState<Candidate[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [electionFee, setElectionFee] = useState<string>('');
+  const [isElectionStarted, setIsElectionStarted] = useState<boolean>(false);
+
+  const {
+    getElectionIdList,
+    getPotentialCandidates,
+    getElectionData,
+    registerCandidate
+  } = useSendPingPongTransaction({
+    type: SessionEnum.abiPingPongSessionId
+  });
 
   useEffect(() => {
     const fetchElections = async () => {
       try {
-        const res = await axios.get('/elections', { baseURL: API_URL });
-        setElections(res.data.elections);
+        setElections(await getElectionIdList());
       } catch (error) {
         console.error('Error fetching elections:', error);
       }
@@ -30,27 +37,47 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
   }, []);
 
   useEffect(() => {
-    const selectedElection = elections.find((election) => election.id === electionId);
-    if (selectedElection) {
-      setElectionFee(selectedElection.fee);
-    }
-  }, [electionId, elections]);
+    const fetchPotentialCandidates = async () => {
+      if (electionId) {
+        try {
+          const candidates = await getPotentialCandidates({ electionId });
+          setPotentialCandidates(candidates);
+        } catch (error) {
+          console.error('Error fetching potential candidates:', error);
+        }
+      } else {
+        setPotentialCandidates([]);
+      }
+    };
+
+    const fetchElectionDetails = async () => {
+      if (electionId) {
+        try {
+          const details = await getElectionData({ electionId });
+          setIsElectionStarted(Date.now() >= details.start_time);
+        } catch (error) {
+          console.error('Error fetching election details:', error);
+        }
+      } else {
+        setIsElectionStarted(false);
+      }
+    };
+
+    fetchElectionDetails();
+    fetchPotentialCandidates();
+  }, [electionId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null); // Reset error state
+
     try {
-      const res = await axios.post('/register_candidate', {
+      console.log('Registering candidate:', { electionId, candidateId });
+      await registerCandidate({
         electionId,
-        name,
-        manifesto,
-        fee_paid: feePaid
-      }, {
-        baseURL: API_URL
+        candidateId
       });
-      setResponse(res.data);
       setError(null);
-      console.log('Candidate registered:', res.data);
     } catch (error: any) {
       setError(error.response?.data?.message || 'Error registering candidate');
       console.error('Error registering candidate:', error);
@@ -70,44 +97,33 @@ export const RegisterCandidate = ({ callbackRoute }: WidgetProps) => {
           >
             <option value=''>Select Election</option>
             {elections.map((election) => (
-              <option key={election.id} value={election.id}>
-                {election.name}
+              <option key={election} value={election}>
+                {election}
               </option>
             ))}
           </select>
         </div>
         <div className='flex flex-col gap-2'>
           <Label className='font-semibold'>Candidate Name</Label>
-          <input
-            type='text'
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+          <select
+            value={candidateId}
+            onChange={(e) => setCandidateId(e.target.value)}
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
-          />
+          >
+            <option value=''>Select Candidate</option>
+            {potentialCandidates.map((candidate) => (
+              <option key={candidate.id} value={candidate.id}>
+                {candidate.name}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Manifesto</Label>
-          <textarea
-            value={manifesto}
-            onChange={(e) => setManifesto(e.target.value)}
-            className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-            required
-          />
-        </div>
-        <div className='flex items-center gap-2'>
-          <input
-            type='checkbox'
-            id='feePaid'
-            checked={feePaid}
-            onChange={(e) => setFeePaid(e.target.checked)}
-            className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-            required
-          />
-          <Label className='font-semibold cursor-pointer'>
-            I agree to pay the fee of {electionFee}
-          </Label>
-        </div>
+        {isElectionStarted && (
+          <div className='text-orange-500'>
+            <strong>Note:</strong> This election has already started.
+          </div>
+        )}
         <Button type='submit' className='mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600'>
           Register Candidate
         </Button>

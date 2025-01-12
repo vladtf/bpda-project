@@ -2,37 +2,37 @@ import { useState } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import axios from 'axios';
-import { API_URL } from 'config';
+import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
-import { useGetAccountInfo } from 'hooks';
+import { useGetAccountInfo, useSendPingPongTransaction } from 'hooks';
+import { SessionEnum } from 'localConstants';
 
 export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
-  const { address: currentAccountAddress } = useGetAccountInfo();
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
-  const [threshold, setThreshold] = useState<number>(10);
-  const [fee, setFee] = useState<string>(100);
   const [response, setResponse] = useState<any>(null);
+
+  const {
+    registerElection
+  } = useSendPingPongTransaction({
+    type: SessionEnum.abiPingPongSessionId
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/register_election', {
+      const res = await registerElection({
         name,
         description,
-        start_time: startTime,
-        end_time: endTime,
-        threshold,
-        admin: currentAccountAddress,
-        fee
-      }, {
-        baseURL: API_URL
+        start_time: new Date(startTime).getTime(),
+        end_time: new Date(endTime).getTime() ,
       });
-      setResponse(res.data);
-      console.log('Election registered:', res.data);
+
+      setResponse(res);
+      console.log('Election registered:', res);
     } catch (error) {
       console.error('Error registering election:', error);
     }
@@ -107,7 +107,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
             21 Days
           </Button>
         </div>
-        <div className='flex flex-col gap-2'>
+        {/* <div className='flex flex-col gap-2'>
           <Label>Sign Threshold</Label>
           <input
             type='number'
@@ -116,8 +116,8 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
           />
-        </div>
-        <div className='flex flex-col gap-2'>
+        </div> */}
+        {/* <div className='flex flex-col gap-2'>
           <Label>Fee</Label>
           <input
             type='number'
@@ -126,7 +126,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
           />
-        </div>
+        </div> */}
         <Button type='submit' className='mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600'>
           Register Election
         </Button>
