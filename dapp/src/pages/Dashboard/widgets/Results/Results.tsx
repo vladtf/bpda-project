@@ -5,18 +5,25 @@ import axios from 'axios';
 import { API_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
+import { useSendPingPongTransaction } from 'hooks';
+import { SessionEnum } from 'localConstants';
 
 export const Results = ({ callbackRoute }: WidgetProps) => {
   const [electionId, setElectionId] = useState<string>('');
   const [results, setResults] = useState<any>(null);
-  const [elections, setElections] = useState<any[]>([]);
+  const [elections, setElections] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const {
+    getElectionIdList,
+  } = useSendPingPongTransaction({
+    type: SessionEnum.abiPingPongSessionId
+  });
 
   useEffect(() => {
     const fetchElections = async () => {
       try {
-        const res = await axios.get('/elections', { baseURL: API_URL });
-        setElections(res.data.elections);
+        setElections(await getElectionIdList());
       } catch (error) {
         console.error('Error fetching elections:', error);
       }
@@ -55,8 +62,8 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
           >
             <option value=''>Select Election</option>
             {elections.map((election) => (
-              <option key={election.id} value={election.id}>
-                {election.name}
+              <option key={election} value={election}>
+                {election}
               </option>
             ))}
           </select>
