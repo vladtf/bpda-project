@@ -1,6 +1,30 @@
 # Blockchain Protocols - Project
 
+- [Blockchain Protocols - Project](#blockchain-protocols---project)
+  - [Voting Web Application Based on the MultiversX Blockchain](#voting-web-application-based-on-the-multiversx-blockchain)
+    - [Team Members](#team-members)
+    - [Purpose of the Project](#purpose-of-the-project)
+    - [Needs It Tries to Satisfy](#needs-it-tries-to-satisfy)
+    - [Components of the Project](#components-of-the-project)
+    - [Data Flow for Blockchain-Based Election App (Rated-Based Voting)](#data-flow-for-blockchain-based-election-app-rated-based-voting)
+      - [1. Voter Eligibility and Registration](#1-voter-eligibility-and-registration)
+      - [2. Election Registration](#2-election-registration)
+      - [3. Candidate Registration](#3-candidate-registration)
+      - [4. Signature Collection (Candidate Approval)](#4-signature-collection-candidate-approval)
+      - [5. Rated-Based Voting](#5-rated-based-voting)
+      - [6. Results](#6-results)
+      - [7. Dispute Resolution](#7-dispute-resolution)
+    - [High-Level Overview (Revised with Rated-Based Voting)](#high-level-overview-revised-with-rated-based-voting)
+    - [Screenshots](#screenshots)
+    - [Consideration for Future Enhancements](#consideration-for-future-enhancements)
+
+
 ## Voting Web Application Based on the MultiversX Blockchain
+
+### Team Members
+
+- [Vladislav Tiftilov](https://github.com/vladtf)
+- [Ravariu Eugen](https://github.com/ravariu-eugen)
 
 ### Purpose of the Project
 
@@ -275,6 +299,19 @@ D_Valid -->|No| X[Results Finalized]
 7. **Dispute Resolution**:  
    - Post-results dispute window ensures fairness and integrity before finalizing outcomes.
 
+### Screenshots
+
+- **Submit Candidacy**:
+
+<img src="images/submit_candidacy.png" alt="Submit Candidacy" width="50%"/>
+
+- **Register Election**:
+
+<img src="images/register_election.png" alt="Register Election" width="50%"/>
+
+- **Vote** and **End Election**:
+
+<img src="images/vote_end_election.png" alt="Vote and End Election" width="50%"/>
 
 ### Consideration for Future Enhancements
 
