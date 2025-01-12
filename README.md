@@ -7,15 +7,15 @@
     - [Purpose of the Project](#purpose-of-the-project)
     - [Needs It Tries to Satisfy](#needs-it-tries-to-satisfy)
     - [Components of the Project](#components-of-the-project)
-    - [Data Flow for Blockchain-Based Election App (Rated-Based Voting)](#data-flow-for-blockchain-based-election-app-rated-based-voting)
-      - [1. Voter Eligibility and Registration](#1-voter-eligibility-and-registration)
-      - [2. Election Registration](#2-election-registration)
-      - [3. Candidate Registration](#3-candidate-registration)
-      - [4. Signature Collection (Candidate Approval)](#4-signature-collection-candidate-approval)
-      - [5. Rated-Based Voting](#5-rated-based-voting)
+    - [Data Flow for Blockchain-Based Election App](#data-flow-for-blockchain-based-election-app)
+      - [1. Election Registration](#1-election-registration)
+      - [2. Candidate Registration](#2-candidate-registration)
+      - [3. Candidate Approval](#3-candidate-approval)
+      - [4. Voter Registration](#4-voter-registration)
+      - [5. Voting](#5-voting)
       - [6. Results](#6-results)
       - [7. Dispute Resolution](#7-dispute-resolution)
-    - [High-Level Overview (Revised with Rated-Based Voting)](#high-level-overview-revised-with-rated-based-voting)
+    - [High-Level Overview](#high-level-overview)
     - [Screenshots](#screenshots)
     - [Consideration for Future Enhancements](#consideration-for-future-enhancements)
 
@@ -71,7 +71,7 @@ The voting web application includes the following components:
 
 ---
 
-### Data Flow for Blockchain-Based Election App (Rated-Based Voting)
+### Data Flow for Blockchain-Based Election App
 
 ```mermaid
 flowchart TB
@@ -145,36 +145,24 @@ D_Valid -->|Yes| SC_Adjust --> SC_Tally
 D_Valid -->|No| X[Results Finalized]
 ```
 
-#### 1. Voter Eligibility and Registration
-
-**Eligibility Check**:  
-- Voters submit identity and eligibility information to the off-chain Voter Eligibility Service.
-- The service verifies:
-  - Age.
-  - Residency in the election region.
-  - Citizenship or other required criteria.
-- Verification can use:
-  - Government databases.
-  - Decentralized ID (DID) systems.
-  - Biometric authentication.
-
-**Issuing Voter Credentials**:  
-- If eligible, the voter’s blockchain address is recorded on-chain as eligible.
-- The voter receives a non-transferable (soulbound) voter token or is added to an on-chain whitelist.
-- This credential allows the voter to sign petitions and cast votes without further on-chain registrations.
-
-**Output**:  
-- The voter’s address is now recognized by the election contracts, enabling participation in all supported elections.
-
----
-
-#### 2. Election Registration
+#### 1. Election Registration
 
 1. **Input**:
    - Election creator submits election details:
-     - Election name, description, start/end times.
-     - Required signature threshold for candidate approval.
-     - Registration fee (paid by the creator).
+     - Election name, description.
+     - start/end times.
+     - Election type:
+       - Plurality
+         - 1 vote per voter
+         - winner is the candidate with the most votes.
+       - Approval
+         - voter can choose any number of candidates to endorse  
+         - winner is the candidate with the most endorsements.
+       - Single Transferable Vote (STV)
+         - a vote is an ordered list of candidates
+         - each candidate gets the votes in which they are first
+         - the candidate with the least votes is eliminated and their votes are redistributed to the remaining candidates
+         - repeat this process until a candidate obtains a majority of votes
 
 2. **Process**:
    - Smart contract validates and stores election metadata.
@@ -187,7 +175,7 @@ D_Valid -->|No| X[Results Finalized]
 
 ---
 
-#### 3. Candidate Registration
+#### 2. Candidate Registration
 
 1. **Input**:
    - Candidate submits a registration request:
@@ -196,48 +184,92 @@ D_Valid -->|No| X[Results Finalized]
 
 2. **Process**:
    - Smart contract checks:
+     - Election has not ended.  
      - Fee payment validity.
      - Uniqueness of the candidate for this `electionId`.
-   - Mints an NFT representing the candidate’s unique ID tied to the `electionId`.
+   - Creates a `candidateId` for the candidate unique for this `electionId`.
    - Candidate status is `Pending` initially.
 
 3. **Output**:
    - Candidate registration is recorded on-chain.
-   - Candidate NFT is issued to identify the candidate in this election.
 
 ---
 
-#### 4. Signature Collection (Candidate Approval)
+#### 3. Candidate Approval
 
 1. **Input**:
-   - Eligible voters sign candidates’ petitions.
-     - Inputs: `electionId`, candidate’s NFT ID.
+   - Election admin approves candidate:
+     - Inputs: `electionId`, `candidateId`.
 
 2. **Process**:
    - Contract verifies:
-     - Voter eligibility (checking voter token/whitelist).
-     - That the voter hasn’t already signed for the same candidate.
-   - Increments signature count for the candidate’s NFT.
+     - Election has not ended.
+     - Candidate is `Pending`.
+     - Election admin is admin for this `electionId`.
 
 3. **Output**:
-   - Candidate’s signature count updates on-chain.
-   - Once threshold is reached, candidate status changes to `Approved`.
+   - Candidate status changes to `Approved`.
 
 ---
 
-#### 5. Rated-Based Voting
+#### 4. Voter Registration
+
+1. **Input**:
+   - Voter submits their verification information.
+
+2. **Process**:
+   - Contract verifies:
+      - Voter is not already registered.
+      - Election has not started.
+   - Sends verification request to the Voter Eligibility Service.
+
+3. **Output**:
+   - Voter registration is recorded on-chain.
+
+**Eligibility Check**:  
+
+- Voters submit identity and eligibility information to the off-chain Voter Eligibility Service.
+- The service verifies:
+  - Age.
+  - Residency in the election region.
+  - Citizenship or other required criteria.
+- Verification can use:
+  - Government databases.
+  - Decentralized ID (DID) systems.
+  - Biometric authentication.
+
+#### 4a. Voter Registration by Admin
+
+1. **Input**:
+   - Election admin registers a new voter:
+     - Inputs: `electionId`, `voterAddress`.
+   - This bypasses the Voter Eligibility Service.
+
+2. **Process**:
+   - Contract verifies:
+      - Election has not started.
+      - Election admin is admin for this `electionId`.
+      - Voter is not already registered.
+
+3. **Output**:
+   - Voter registration is recorded on-chain.
+
+---
+
+#### 5. Voting
 
 1. **Input**:
    - During the voting phase, an eligible voter casts their votes.
-   - This rated-based system allows the voter to vote for multiple candidates at once, providing a form of ranked or rated input (e.g., the voter might allocate points or simple approvals to multiple candidates).
-     - Inputs: `electionId`, and a set of candidate NFT IDs along with the voter's intended rating or endorsement (e.g., equal approval, tiered preferences, or point-based ratings).
+   - Depending on the election type:
+     - Plurality: Single candidate.
+     - Approval: Unordered list of candidates.
+     - STV: Ordered list of candidates.
 
 2. **Process**:
    - Smart contract verifies:
      - Voter eligibility.
      - Voter’s compliance with election rules (e.g., cannot vote more than once for the same candidate, and must follow the rating constraints).
    - Records the voter’s rated votes on-chain.
-   - Each candidate’s vote count (or rating score) is updated accordingly.
 
 3. **Output**:
    - All voting data (including ratings or multiple approvals) is immutably stored on-chain.
@@ -251,12 +283,11 @@ D_Valid -->|No| X[Results Finalized]
    - At the end of the election, or upon admin finalization.
 
 2. **Process**:
-   - Smart contract tallies votes based on cumulative ratings/approvals for each candidate’s NFT.
+   - Smart contract tallies votes for each candidate.
    - Computes final scores or rankings.
 
 3. **Output**:
    - Final results (scores, rankings) are published on-chain.
-   - Candidate NFTs and related metadata reflect final tallies.
 
 ---
 
@@ -281,22 +312,22 @@ D_Valid -->|No| X[Results Finalized]
 
 ---
 
-### High-Level Overview (Revised with Rated-Based Voting)
+### High-Level Overview
 
-1. **Voter Eligibility & Registration**:  
-   - Single step: Off-chain verification grants on-chain eligibility.
-
-2. **Election Registration**:  
+1. **Election Registration**:  
    - Election is created, parameters fixed, and `electionId` set.
 
-3. **Candidate Registration**:  
-   - Candidates join, pay fees, and receive unique NFT IDs.
+2. **Candidate Registration**:  
+   - Candidates join, pay fees, and receives `candidateId`.
 
-4. **Signature Collection (Approval Phase)**:  
-   - Voters endorse candidates to achieve approved status.
+3. **Candidate Approval**:  
+   - Admin approves candidates.
 
-5. **Rated-Based Voting**:  
-   - Eligible voters cast multiple votes across different candidates, allowing for a more expressive rating-based outcome.
+4. **Voter Registration**:  
+   - Voter is registered either by admin or through the Voter Eligibility Service.
+
+5. **Voting**:  
+   - Eligible voters cast votes depending on election type.
 
 6. **Results**:  
    - Votes tallied, final rankings/scores on-chain.
