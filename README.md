@@ -7,7 +7,7 @@
     - [Purpose of the Project](#purpose-of-the-project)
     - [Needs It Tries to Satisfy](#needs-it-tries-to-satisfy)
     - [Components of the Project](#components-of-the-project)
-    - [Data Flow for Blockchain-Based Election App (Rated-Based Voting)](#data-flow-for-blockchain-based-election-app-rated-based-voting)
+    - [Data Flow for Blockchain-Based Election App](#data-flow-for-blockchain-based-election-app)
       - [1. Election Registration](#1-election-registration)
       - [2. Candidate Registration](#2-candidate-registration)
       - [3. Candidate Approval](#3-candidate-approval)
@@ -15,7 +15,7 @@
       - [5. Voting](#5-voting)
       - [6. Results](#6-results)
       - [7. Dispute Resolution](#7-dispute-resolution)
-    - [High-Level Overview (Revised with Rated-Based Voting)](#high-level-overview-revised-with-rated-based-voting)
+    - [High-Level Overview](#high-level-overview)
     - [Screenshots](#screenshots)
     - [Consideration for Future Enhancements](#consideration-for-future-enhancements)
 
@@ -71,7 +71,7 @@ The voting web application includes the following components:
 
 ---
 
-### Data Flow for Blockchain-Based Election App (Rated-Based Voting)
+### Data Flow for Blockchain-Based Election App
 
 ```mermaid
 flowchart TB
@@ -193,6 +193,8 @@ D_Valid -->|No| X[Results Finalized]
 3. **Output**:
    - Candidate registration is recorded on-chain.
 
+---
+
 #### 3. Candidate Approval
 
 1. **Input**:
@@ -207,6 +209,8 @@ D_Valid -->|No| X[Results Finalized]
 
 3. **Output**:
    - Candidate status changes to `Approved`.
+
+---
 
 #### 4. Voter Registration
 
@@ -234,8 +238,6 @@ D_Valid -->|No| X[Results Finalized]
   - Decentralized ID (DID) systems.
   - Biometric authentication.
 
----
-
 #### 4a. Voter Registration by Admin
 
 1. **Input**:
@@ -251,6 +253,8 @@ D_Valid -->|No| X[Results Finalized]
 
 3. **Output**:
    - Voter registration is recorded on-chain.
+
+---
 
 #### 5. Voting
 
@@ -308,7 +312,7 @@ D_Valid -->|No| X[Results Finalized]
 
 ---
 
-### High-Level Overview (Revised with Rated-Based Voting)
+### High-Level Overview
 
 1. **Election Registration**:  
    - Election is created, parameters fixed, and `electionId` set.
