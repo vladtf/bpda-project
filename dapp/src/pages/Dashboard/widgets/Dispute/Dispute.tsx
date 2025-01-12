@@ -13,9 +13,12 @@ export const Dispute = ({ callbackRoute }: WidgetProps) => {
   const [reason, setReason] = useState<string>('');
   const [response, setResponse] = useState<any>(null);
   const [elections, setElections] = useState<string[]>([]);
+  const [disputeName, setDisputeName] = useState('');
+  const [disputeDescription, setDisputeDescription] = useState('');
 
   const {
     getElectionIdList,
+    makeDispute
   } = useSendElectionTransaction({
     type: SessionEnum.abiElectionSessionId
   });
@@ -35,12 +38,12 @@ export const Dispute = ({ callbackRoute }: WidgetProps) => {
   const handleDispute = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/dispute', {
+      await makeDispute({
         electionId,
-        reason
-      }, { baseURL: GATEWAY_URL });
-      setResponse(res.data);
-      console.log('Dispute filed:', res.data);
+        dispute_name: disputeName,
+        dispute_description: disputeDescription
+      });
+      setResponse('Dispute filed successfully');
     } catch (error) {
       console.error('Error filing dispute:', error);
     }
@@ -66,10 +69,19 @@ export const Dispute = ({ callbackRoute }: WidgetProps) => {
           </select>
         </div>
         <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Reason for Dispute</Label>
+          <Label className='font-semibold'>Dispute Name</Label>
+          <input
+            value={disputeName}
+            onChange={(e) => setDisputeName(e.target.value)}
+            className='input border border-gray-300 rounded-md'
+            required
+          />
+        </div>
+        <div className='flex flex-col gap-2'>
+          <Label className='font-semibold'>Dispute Description</Label>
           <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            value={disputeDescription}
+            onChange={(e) => setDisputeDescription(e.target.value)}
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
           />
