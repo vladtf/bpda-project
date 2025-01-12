@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
-import axios from 'axios';
 import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
@@ -42,26 +41,9 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
     fetchElectionResults();
   }, [electionId, getElectionResults]);
 
-  const fetchResults = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null); // Reset error state
-    try {
-      const res = await axios.get('/results', {
-        params: { electionId },
-        baseURL: GATEWAY_URL
-      });
-      const sortedResults = res.data.results.sort((a: any, b: any) => b.total_rating - a.total_rating);
-      setCandidate({ ...res.data, results: sortedResults });
-      console.log('Election results:', sortedResults);
-    } catch (error: any) {
-      console.error('Error fetching results:', error);
-      setError(error.response?.data?.error || 'Failed to fetch results. Please try again.');
-    }
-  };
-
   return (
     <div className='flex flex-col gap-6'>
-      <form onSubmit={fetchResults} className='flex flex-col gap-4 p-4 bg-white shadow-md rounded-md'>
+      <form onSubmit={(e) => e.preventDefault()} className='flex flex-col gap-4 p-4 bg-white shadow-md rounded-md'>
         <div className='flex flex-col gap-2'>
           <Label className='font-semibold'>Election ID</Label>
           <select

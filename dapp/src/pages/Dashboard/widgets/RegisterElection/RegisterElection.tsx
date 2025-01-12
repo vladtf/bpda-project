@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
-import axios from 'axios';
-import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
 import { useGetAccountInfo, useSendElectionTransaction } from 'hooks';
