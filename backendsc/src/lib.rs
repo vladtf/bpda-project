@@ -376,7 +376,7 @@ pub trait BackendSc {
     
         require!(self.election_id_list().contains(&election_id), "Election does not exist");
         require!(self.election_data(election_id).get().ended == false, "Election has already ended");
-        require!(self.election_data(election_id).get().start_time < self.blockchain().get_block_timestamp(), "Election has started");
+        require!(self.election_data(election_id).get().start_time > self.blockchain().get_block_timestamp(), "Election has started");
 
 
         // manage fee
@@ -408,7 +408,7 @@ pub trait BackendSc {
         require!(self.election_id_list().contains(&election_id), "Election does not exist");
         require!(self.election_data(election_id).get().ended == false, "Election has already ended");
         require!(self.blockchain().get_caller() == self.election_data(election_id).get().admin, "Only admin can register candidates");
-        require!(self.election_data(election_id).get().start_time < self.blockchain().get_block_timestamp(), "Election has started");
+        require!(self.election_data(election_id).get().start_time > self.blockchain().get_block_timestamp(), "Election has started");
 
 
         require!(self.potential_candidate_id_list(election_id).contains(&candidate_id), "Candidate does not exist");
@@ -436,7 +436,7 @@ pub trait BackendSc {
 
         require!(self.election_id_list().contains(&election_id), "Election does not exist");
         require!(self.election_data(election_id).get().ended == false, "Election has already ended");
-        require!(self.election_data(election_id).get().start_time < self.blockchain().get_block_timestamp(), "Election has started");
+        require!(self.election_data(election_id).get().start_time > self.blockchain().get_block_timestamp(), "Election has started");
         require!(!self.registered_voters(election_id).contains(&voter_address), "Already registered");
 
         // perform verification logic here
@@ -523,6 +523,9 @@ pub trait BackendSc {
     // }
 
 
+    #[view(getCurrentBlockTimestamp)]
+    fn get_block_timestamp(&self) -> u64 {
+        self.blockchain().get_block_timestamp()
+    }
 
-    
 }
