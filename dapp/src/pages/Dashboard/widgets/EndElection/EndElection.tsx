@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
-import axios from 'axios';
-import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
-import { useGetAccountInfo, useSendPingPongTransaction } from 'hooks';
+import { useSendPingPongTransaction } from 'hooks';
 import { SessionEnum } from 'localConstants';
 
 export const EndElection = ({ callbackRoute }: WidgetProps) => {
@@ -13,12 +11,10 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
   const [response, setResponse] = useState<any>(null);
   const [elections, setElections] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { address: adminAddress } = useGetAccountInfo();
-  const [selectedElection, setSelectedElection] = useState<any>(null);
-
 
   const {
     getElectionIdList,
+    endElection
   } = useSendPingPongTransaction({
     type: SessionEnum.abiPingPongSessionId
   });
@@ -35,40 +31,29 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
     fetchElections();
   }, []);
 
-  const handleEndElection = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null); // Reset error state
     try {
-      const res = await axios.post('/end_election', { electionId, admin: adminAddress }, { baseURL: GATEWAY_URL });
-      setResponse(res.data);
-      console.log('Election ended:', res.data);
+      await endElection({
+        electionId
+      });
+      setResponse('Sent end election transaction');
+      setError(null);
     } catch (error: any) {
+      setError(error.response?.data?.message || 'Error ending election');
       console.error('Error ending election:', error);
-      setError(error.response?.data?.error || 'Failed to end election. Please try again.');
-    }
-  };
-
-  const handleElectionChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedId = e.target.value;
-    setElectionId(selectedId);
-    try {
-      const res = await axios.get(`/elections/${selectedId}`, { baseURL: GATEWAY_URL });
-
-      setSelectedElection(res.data.election);
-    } catch (error) {
-      console.error('Error fetching election data:', error);
-      setError(error.response?.data?.error || 'Failed to fetch election data. Please try again.');
     }
   };
 
   return (
     <div className='flex flex-col gap-6'>
-      <form onSubmit={handleEndElection} className='flex flex-col gap-4 p-4 bg-white shadow-md rounded-md'>
+      <form onSubmit={handleSubmit} className='flex flex-col gap-4 p-4 bg-white shadow-md rounded-md'>
         <div className='flex flex-col gap-2'>
           <Label className='font-semibold'>Election ID</Label>
           <select
             value={electionId}
-            onChange={handleElectionChange}
+            onChange={(e) => setElectionId(e.target.value)}
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
           >
@@ -80,13 +65,7 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
             ))}
           </select>
         </div>
-        {selectedElection && (
-          <div className='rounded-md'>
-            <h3 className='font-semibold mb-2'>Election Details</h3>
-            <pre>{JSON.stringify(selectedElection, null, 2)}</pre>
-          </div>
-        )}
-        <Button type='submit' className='mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600'>
+        <Button type='submit' className='mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600'>
           End Election
         </Button>
       </form>
@@ -95,7 +74,6 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
           <div className='rounded-md'>
             <h3 className='font-semibold mb-2'>Response</h3>
             <pre>{JSON.stringify(response, null, 2)}</pre>
-            <p>Unresolved Disputes: {response.unresolved_disputes}</p>
           </div>
         )}
         {error && (

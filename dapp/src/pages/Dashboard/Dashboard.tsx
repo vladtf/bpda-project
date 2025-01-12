@@ -1,33 +1,22 @@
-import { contractAddress } from 'config';
 import { AuthRedirectWrapper } from 'wrappers';
 import {
   RegisterElection,
   RegisterCandidate,
-  SignCandidate,
   Vote,
   EndElection,
   Results,
   Dispute,
   ResolveDispute,
-  ValidateCandidate,
-  Explorer // Add this import
+  Explorer,
+  SubmitCandidacy,
+  RegisterVoter,
+  Transactions
 } from './widgets';
 import { useScrollToElement } from 'hooks';
 import { Widget } from './components';
 import { WidgetType } from 'types/widget.types';
-import { EligibilityCheck } from './widgets/EligibilityCheck';
 
 const WIDGETS: WidgetType[] = [
-  {
-    title: 'Eligibility Check',
-    widget: EligibilityCheck,
-    description:
-      'Eligibility check for the connected account to interact with the Smart Contract',
-    reference: 'https://github.com/multiversx/mx-ping-pong-service',
-    anchor: 'ping-pong-backend',
-    role: 'voter',
-    step: 1
-  },
   {
     title: 'Register Election',
     widget: RegisterElection,
@@ -36,6 +25,15 @@ const WIDGETS: WidgetType[] = [
     anchor: 'register-election',
     role: 'admin',
     step: 1
+  },
+  {
+    title: 'Submit Candidacy',
+    widget: SubmitCandidacy,
+    description: 'Submit your candidacy for an election',
+    reference: 'https://yourdocs.com/submit-candidacy',
+    anchor: 'submit-candidacy',
+    role: 'voter',
+    step: 2
   },
   {
     title: 'Register Candidate',
@@ -47,22 +45,13 @@ const WIDGETS: WidgetType[] = [
     step: 2
   },
   {
-    title: 'Sign Candidate',
-    widget: SignCandidate,
-    description: 'Sign a candidate for an election',
-    reference: 'https://yourdocs.com/sign-candidate',
-    anchor: 'sign-candidate',
+    title: 'Register Voter',
+    widget: RegisterVoter,
+    description: 'Register a voter or self to an election',
+    reference: 'https://yourdocs.com/register-voter',
+    anchor: 'register-voter',
     role: 'voter',
     step: 2
-  },
-  {
-    title: 'Validate Candidate',
-    widget: ValidateCandidate,
-    description: 'Validate a candidate based on voter signatures',
-    reference: 'https://yourdocs.com/validate-candidate',
-    anchor: 'validate-candidate',
-    role: 'admin',
-    step: 3
   },
   {
     title: 'Vote',
@@ -112,7 +101,16 @@ const WIDGETS: WidgetType[] = [
   {
     title: 'Explorer',
     widget: Explorer,
-    description: 'Explore all items from the mocked database',
+    description: 'Explore all items from the smart contract',
+    reference: 'https://yourdocs.com/explorer',
+    anchor: 'explorer',
+    role: 'admin',
+    step: 6
+  },
+  {
+    title: 'Transactions',
+    widget: Transactions,
+    description: 'Explore all transactions from the smart contract',
     reference: 'https://yourdocs.com/explorer',
     anchor: 'explorer',
     role: 'admin',

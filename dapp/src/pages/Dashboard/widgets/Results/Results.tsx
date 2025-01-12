@@ -5,20 +5,16 @@ import axios from 'axios';
 import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
-import { useSendPingPongTransaction } from 'hooks';
 import { SessionEnum } from 'localConstants';
+import { Candidate, useSendPingPongTransaction } from 'hooks';
 
 export const Results = ({ callbackRoute }: WidgetProps) => {
   const [electionId, setElectionId] = useState<string>('');
-  const [results, setResults] = useState<any>(null);
+  const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [elections, setElections] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    getElectionIdList,
-  } = useSendPingPongTransaction({
-    type: SessionEnum.abiPingPongSessionId
-  });
+  const { getElectionResults, getElectionIdList } = useSendPingPongTransaction({ type: SessionEnum.abiPingPongServiceSessionId });
 
   useEffect(() => {
     const fetchElections = async () => {
@@ -32,6 +28,20 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
     fetchElections();
   }, []);
 
+  useEffect(() => {
+    const fetchElectionResults = async () => {
+      if (!electionId) return;
+      try {
+        const res = await getElectionResults({ electionId });
+        setCandidate(res);
+      } catch (error: any) {
+        console.error('Error fetching results:', error);
+        setError(error.response?.data?.error || 'Failed to fetch results. Please try again.');
+      }
+    }
+    fetchElectionResults();
+  }, [electionId, getElectionResults]);
+
   const fetchResults = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null); // Reset error state
@@ -41,7 +51,7 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
         baseURL: GATEWAY_URL
       });
       const sortedResults = res.data.results.sort((a: any, b: any) => b.total_rating - a.total_rating);
-      setResults({ ...res.data, results: sortedResults });
+      setCandidate({ ...res.data, results: sortedResults });
       console.log('Election results:', sortedResults);
     } catch (error: any) {
       console.error('Error fetching results:', error);
@@ -73,16 +83,10 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
         </Button>
       </form>
       <OutputContainer>
-        {results && (
+        {candidate && (
           <div className='rounded-md'>
             <h3 className='font-semibold mb-2'>Election Results</h3>
-            <pre>{JSON.stringify(results.results, null, 2)}</pre>
-            {results.election.status === 'ended' && results.winner && (
-              <div className='mt-4 p-4 bg-green-100 rounded-md'>
-                <h4 className='font-semibold'>Winner</h4>
-                <p>{results.winner.name} with {results.winner.total_rating} votes</p>
-              </div>
-            )}
+            <pre>{JSON.stringify(candidate, null, 2)}</pre>
           </div>
         )}
         {error && (

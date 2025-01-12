@@ -15,3 +15,5 @@ export * from './ResolveDispute/ResolveDispute';
 export * from './ValidateCandidate/ValidateCandidate';
 export * from './SubmitCandidacy/SubmitCandidacy';
 export * from './Explorer/Explorer';
+export * from './RegisterVoter/RegisterVoter';
+export * from './Transactions/Transactions';

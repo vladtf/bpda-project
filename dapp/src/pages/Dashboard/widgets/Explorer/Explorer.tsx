@@ -1,31 +1,42 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_URL } from 'config';
+import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
+import { SessionEnum } from 'localConstants';
+import { useSendPingPongTransaction } from 'hooks';
 
 export const Explorer = ({ callbackRoute }: WidgetProps) => {
-  const [elections, setElections] = useState<any[]>([]);
+  // const [elections, setElections] = useState<any[]>([]);
+  const [elections, setElections] = useState<any>([]);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [voters, setVoters] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const {
+    getElectionIdList
+  } = useSendPingPongTransaction({
+    type: SessionEnum.abiPingPongSessionId
+  });
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [electionsRes, candidatesRes, votersRes, disputesRes] = await Promise.all([
-        axios.get('/elections', { baseURL: API_URL }),
-        axios.get('/candidates', { baseURL: API_URL }),
-        axios.get('/voters', { baseURL: API_URL }),
-        axios.get('/disputes', { baseURL: API_URL })
-      ]);
+      // const [/* electionsRes, */ candidatesRes, votersRes, disputesRes] = await Promise.all([
+      //   // axios.get('/elections', { baseURL: GATEWAY_URL }),
+      //   axios.get('/candidates', { baseURL: GATEWAY_URL }),
+      //   axios.get('/voters', { baseURL: GATEWAY_URL }),
+      //   axios.get('/disputes', { baseURL: GATEWAY_URL })
+      // ]);
 
-      setElections(electionsRes.data.elections);
-      setCandidates(candidatesRes.data.candidates);
-      setVoters(votersRes.data.voters);
-      setDisputes(disputesRes.data.disputes);
+      // // setElections(electionsRes.data.elections);
+      // setCandidates(candidatesRes.data.candidates);
+      // setVoters(votersRes.data.voters);
+      // setDisputes(disputesRes.data.disputes);
+
+      setElections(await getElectionIdList());
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Failed to fetch data. Please try again.');

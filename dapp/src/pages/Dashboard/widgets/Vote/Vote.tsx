@@ -1,32 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
-import axios from 'axios';
-import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
-import { useGetAccountInfo, useSendPingPongTransaction } from 'hooks';
+import { Candidate, useSendPingPongTransaction } from 'hooks';
 import { SessionEnum } from 'localConstants';
-
-interface VoteOption {
-  candidateId: string;
-  rating: number;
-}
+import { BigIntValue, U16Value } from '@multiversx/sdk-core/out';
 
 export const Vote = ({ callbackRoute }: WidgetProps) => {
-  const { address: voterAddress } = useGetAccountInfo();
   const [electionId, setElectionId] = useState<string>('');
-  const [votes, setVotes] = useState<VoteOption[]>([]);
+  const [selectedCandidates, setSelectedCandidates] = useState<number[]>([]);
   const [response, setResponse] = useState<any>(null);
   const [elections, setElections] = useState<string[]>([]);
-  const [candidates, setCandidates] = useState<any[]>([]);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [includeValidated, setIncludeValidated] = useState<boolean>(true);
-  const [hideNonValidated, setHideNonValidated] = useState<boolean>(true);
-
 
   const {
     getElectionIdList,
+    getCandidates,
+    vote
   } = useSendPingPongTransaction({
     type: SessionEnum.abiPingPongSessionId
   });
@@ -37,7 +29,6 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
         setElections(await getElectionIdList());
       } catch (error) {
         console.error('Error fetching elections:', error);
-        setError(error.response?.data?.error || 'Failed to fetch elections. Please try again.');
       }
     };
 
@@ -48,50 +39,41 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
     const fetchCandidates = async () => {
       if (electionId) {
         try {
-          const res = await axios.get(`/candidates?electionId=${electionId}`, { baseURL: GATEWAY_URL });
-          setCandidates(res.data.candidates);
+          const candidates = await getCandidates({ electionId });
+          setCandidates(candidates);
         } catch (error) {
           console.error('Error fetching candidates:', error);
-          setError(error.response?.data?.error || 'Failed to fetch candidates. Please try again.');
         }
+      } else {
+        setCandidates([]);
       }
     };
 
     fetchCandidates();
   }, [electionId]);
 
-  const handleVoteChange = (candidateId: string, rating: number) => {
-    if (rating < 0 || rating > 10) {
-      setError("Rating must be between 0 and 10");
-      return;
-    }
-    const existingVote = votes.find(vote => vote.candidateId === candidateId);
-    if (existingVote) {
-      setVotes(votes.map(vote => vote.candidateId === candidateId ? { ...vote, rating } : vote));
-    } else {
-      setVotes([...votes, { candidateId, rating }]);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null); // Reset error state
     try {
-      const res = await axios.post('/vote', {
-        voter_address: voterAddress,
+      await vote({
         electionId,
-        votes
-      }, {
-        baseURL: GATEWAY_URL
+        votes: selectedCandidates.map((candidateId) => new U16Value(candidateId))
       });
-      console.log('Vote submitted:', res.data);
-      const sortedResponse = res.data.intermediate_results.sort((a: any, b: any) => b.votes - a.votes);
-      setResponse(sortedResponse);
-      console.log('Vote submitted:', sortedResponse);
+      setResponse('Vote submitted successfully');
+      setError(null);
     } catch (error: any) {
+      setError(error.response?.data?.message || 'Error submitting vote');
       console.error('Error submitting vote:', error);
-      setError(error.response?.data?.error || 'Failed to submit vote. Please try again.');
     }
+  };
+
+  const handleCandidateSelection = (candidateId: number) => {
+    setSelectedCandidates((prevSelected) =>
+      prevSelected.includes(candidateId)
+        ? prevSelected.filter((id) => id !== candidateId)
+        : [...prevSelected, candidateId]
+    );
   };
 
   return (
@@ -113,42 +95,23 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
             ))}
           </select>
         </div>
-        <div className='flex items-center gap-2'>
-          <input
-            type='checkbox'
-            checked={hideNonValidated}
-            onChange={(e) => setHideNonValidated(e.target.checked)}
-            className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-          />
-          <Label className='font-semibold'>Hide Non-Validated Candidates</Label>
-        </div>
-        {candidates
-          .filter(candidate => !hideNonValidated || candidate.approved)
-          .map((candidate) => (
-            <div key={candidate.id} className='flex flex-col gap-2'>
-              <Label className='font-semibold'>{candidate.name}</Label>
-              <div className='flex items-center gap-2'>
-                <input
-                  type='checkbox'
-                  onChange={(e) => handleVoteChange(candidate.id, e.target.checked ? 1 : 0)}
-                  className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  disabled={!candidate.approved}
-                />
-                <span className='text-gray-700'>{candidate.name} ({candidate.approved ? 'Validated' : 'Not Validated'})</span>
-              </div>
-              {votes.find(vote => vote.candidateId === candidate.id) && (
-                <input
-                  type='number'
-                  value={votes.find(vote => vote.candidateId === candidate.id)?.rating || 0}
-                  onChange={(e) => handleVoteChange(candidate.id, Number(e.target.value))}
-                  className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-                  min={0}
-                  max={10}
-                  required
-                />
-              )}
+        <div className='flex flex-col gap-2'>
+          <Label className='font-semibold'>Candidates</Label>
+          {candidates.map((candidate) => (
+            <div key={candidate.id} className='flex items-center gap-2'>
+              <input
+                type='checkbox'
+                id={`candidate-${candidate.id}`}
+                checked={selectedCandidates.includes(candidate.id)}
+                onChange={() => handleCandidateSelection(candidate.id)}
+                className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+              />
+              <Label htmlFor={`candidate-${candidate.id}`} className='cursor-pointer'>
+                {candidate.name}
+              </Label>
             </div>
           ))}
+        </div>
         <Button type='submit' className='mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600'>
           Submit Vote
         </Button>
@@ -158,12 +121,6 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
           <div className='rounded-md'>
             <h3 className='font-semibold mb-2'>Response</h3>
             <pre>{JSON.stringify(response, null, 2)}</pre>
-            {response[0]?.electionDone && (
-              <div className='mt-4 p-4 bg-green-100 rounded-md'>
-                <h4 className='font-semibold'>Winner</h4>
-                <p>{response[0].candidateName} with {response[0].votes} votes</p>
-              </div>
-            )}
           </div>
         )}
         {error && (
