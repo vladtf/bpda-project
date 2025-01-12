@@ -4,7 +4,7 @@ import {
   removeAllSignedTransactions,
   removeAllTransactionsToSign
 } from '@multiversx/sdk-dapp/services/transactions/clearTransactions';
-import { API_URL, contractAddress } from 'config';
+import { GATEWAY_URL, contractAddress } from 'config';
 import { signAndSendTransactions } from 'helpers/signAndSendTransactions';
 import {
   useGetAccountInfo,
@@ -21,28 +21,190 @@ import {
 } from 'types/pingPong.types';
 import { newTransaction } from 'helpers/sdkDappHelpers';
 import { Address, ProxyNetworkProvider } from 'utils/sdkDappCore';
-import { AddressValue, BigIntValue, BigUIntValue, ResultsParser, StringValue, TypedValue } from '@multiversx/sdk-core/out';
+import { AddressValue, BigIntValue, BigUIntValue, Field, ResultsParser, StringValue, TypedValue, VariadicType, VariadicValue } from '@multiversx/sdk-core/out';
 
 type PingPongTransactionProps = {
   type: SessionEnum;
 };
 
-const PING_TRANSACTION_INFO = {
-  processingMessage: 'Processing Ping transaction',
-  errorMessage: 'An error has occured during Ping',
-  successMessage: 'Ping transaction successful'
+
+// "Candidate": {
+//   "type": "struct",
+//   "fields": [
+//       {
+//           "name": "name",
+//           "type": "bytes"
+//       },
+//       {
+//           "name": "description",
+//           "type": "bytes"
+//       },
+//       {
+//           "name": "creator",
+//           "type": "Address"
+//       }
+//   ]
+// },
+export type Candidate = {
+  id: number;
+  name: string;
+  description: string;
+  creator: string;
 };
 
-const PONG_TRANSACTION_INFO = {
-  processingMessage: 'Processing Pong transaction',
-  errorMessage: 'An error has occured during Pong',
-  successMessage: 'Pong transaction successful'
+// "Dispute": {
+//   "type": "struct",
+//   "fields": [
+//       {
+//           "name": "name",
+//           "type": "bytes"
+//       },
+//       {
+//           "name": "description",
+//           "type": "bytes"
+//       },
+//       {
+//           "name": "creator",
+//           "type": "Address"
+//       },
+//       {
+//           "name": "resolved",
+//           "type": "bool"
+//       },
+//       {
+//           "name": "result_adjusted",
+//           "type": "bool"
+//       }
+//   ]
+// },
+export type Dispute = {
+  name: string;
+  description: string;
+  creator: string;
+  resolved: boolean;
+  result_adjusted: boolean;
 };
+// "ElectionData": {
+//   "type": "struct",
+//   "fields": [
+//       {
+//           "name": "name",
+//           "type": "bytes"
+//       },
+//       {
+//           "name": "description",
+//           "type": "bytes"
+//       },
+//       {
+//           "name": "start_time",
+//           "type": "u64"
+//       },
+//       {
+//           "name": "end_time",
+//           "type": "u64"
+//       },
+//       {
+//           "name": "election_type",
+//           "type": "ElectionType"
+//       },
+//       {
+//           "name": "ended",
+//           "type": "bool"
+//       },
+//       {
+//           "name": "admin",
+//           "type": "Address"
+//       }
+//   ]
+// },
+export type ElectionData = {
+  id: number;
+  name: string;
+  description: string;
+  start_time: number;
+  end_time: number;
+  election_type: string;
+  ended: boolean;
+  admin: string;
+};
+// "ElectionType": {
+//   "type": "enum",
+//   "variants": [
+//       {
+//           "name": "Plurality",
+//           "discriminant": 0
+//       },
+//       {
+//           "name": "Approval",
+//           "discriminant": 1
+//       },
+//       {
+//           "name": "SingleTransferableVote",
+//           "discriminant": 2
+//       }
+//   ]
+// },
+export type ElectionType = 'Plurality' | 'Approval' | 'SingleTransferableVote';
+// "Vote": {
+//   "type": "struct",
+//   "fields": [
+//       {
+//           "name": "candidates",
+//           "type": "List<u16>"
+//       }
+//   ]
+// }
+export type Vote = {
+  candidates: number[];
+};
+
 
 const REGISTER_ELECTION_INFO = {
   processingMessage: 'Processing Register Election transaction',
   errorMessage: 'An error has occured during Register Election',
   successMessage: 'Register Election transaction successful'
+};
+
+const SUBMIT_CANDIDANCY_INFO = {
+  processingMessage: 'Processing Submit Candidancy transaction',
+  errorMessage: 'An error has occured during Submit Candidancy',
+  successMessage: 'Submit Candidancy transaction successful'
+};
+
+const REGISTER_CANDIDATE_INFO = {
+  processingMessage: 'Processing Register Candidate transaction',
+  errorMessage: 'An error has occured during Register Candidate',
+  successMessage: 'Register Candidate transaction successful'
+};
+
+const REGISTER_SELF_INFO = {
+  processingMessage: 'Processing Register Self transaction',
+  errorMessage: 'An error has occured during Register Self',
+  successMessage: 'Register Self transaction successful'
+};
+
+const REGISTER_VOTER_INFO = {
+  processingMessage: 'Processing Register Voter transaction',
+  errorMessage: 'An error has occured during Register Voter',
+  successMessage: 'Register Voter transaction successful'
+};
+
+const VOTE_INFO = {
+  processingMessage: 'Processing Vote transaction',
+  errorMessage: 'An error has occured during Vote',
+  successMessage: 'Vote transaction successful'
+};
+
+const END_ELECTION_INFO = {
+  processingMessage: 'Processing End Election transaction',
+  errorMessage: 'An error has occured during End Election',
+  successMessage: 'End Election transaction successful'
+};
+
+const MAKE_DISPUTE_INFO = {
+  processingMessage: 'Processing Make Dispute transaction',
+  errorMessage: 'An error has occured during Make Dispute',
+  successMessage: 'Make Dispute transaction successful'
 };
 
 export const useSendPingPongTransaction = ({
@@ -51,7 +213,7 @@ export const useSendPingPongTransaction = ({
   // Needed in order to differentiate widgets between each other
   // By default sdk-dapp takes the last sessionId available which will display on every widget the same transaction
   // this usually appears on page refreshes
-  const [pingPongSessionId, setPingPongSessionId] = useState(
+  const [pingPongSessionId, setElectionSessionId] = useState(
     sessionStorage.getItem(type)
   );
 
@@ -74,7 +236,7 @@ export const useSendPingPongTransaction = ({
         .getDisputeIDList(electionId)
         .buildQuery();
 
-      const proxyNetworkProvider = new ProxyNetworkProvider(API_URL);
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
       let queryResponse = await proxyNetworkProvider.queryContract(disputeIdList);
       let disputeIdListRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getDisputeIDList'));
 
@@ -83,18 +245,189 @@ export const useSendPingPongTransaction = ({
     }, []
   );
 
+  const getElectionList = useCallback(
+    async () => {
+      const electionList = await smartContract.methodsExplicit
+        .electionList()
+        .buildQuery();
+
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
+      let queryResponse = await proxyNetworkProvider.queryContract(electionList);
+      let electionListRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('electionList'));
+
+      const mappedElectionList: ElectionData[] = electionListRes.values.map((value: any) => {
+        const electionData = value.items.map((item: any) => item.value);
+        return {
+          id: '0',
+          name: electionData[0].toString(),
+          description: electionData[1].toString(),
+          start_time: electionData[2].toBigInt() / 1000,
+          end_time: electionData[3].toBigInt(),
+          election_type: electionData[4].toString(),
+          ended: electionData[5].toBoolean(),
+          admin: electionData[6].toString()
+        };
+      });
+      return mappedElectionList;
+    }, []
+  );
+
+  const getPotentialCandidates = useCallback(
+    async ({ electionId }: any) => {
+      const potentialCandidateIds = await getPotentialCandidateIDs({ electionId });
+      const candidates = await Promise.all(potentialCandidateIds.map(candidateId => getCandidate({ electionId, candidateId })));
+      return candidates;
+    }
+    , []
+  );
+
+  const getCandidates = useCallback(
+    async ({ electionId }: any) => {
+      const candidateIds = await getCandidateIds({ electionId });
+      const candidates = await Promise.all(candidateIds.map(candidateId => getCandidate({ electionId, candidateId })));
+      return candidates;
+    }, []
+  );
+
+  const getCandidateIds = useCallback(
+    async ({ electionId }: any) => {
+      const args = [
+        new BigUIntValue(electionId)
+      ];
+
+      const candidateIds = await smartContract.methodsExplicit
+        .getCandidateIDs(args)
+        .buildQuery();
+
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
+      let queryResponse = await proxyNetworkProvider.queryContract(candidateIds);
+      let candidateIdsRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getCandidateIDs'));
+
+      const mappedCandidateIds = candidateIdsRes.values.map((value: any) => value.items.map((item: any) => item.value.toString())).flat();
+      return mappedCandidateIds;
+    }, []
+  );
+
+  const getPotentialCandidateIDs = useCallback(
+    async ({ electionId }: any) => {
+      const args = [
+        new BigUIntValue(electionId)
+      ];
+
+      const potentialCandidateIDs = await smartContract.methodsExplicit
+        .getPotentialCandidateIDs(args)
+        .buildQuery();
+
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
+      let queryResponse = await proxyNetworkProvider.queryContract(potentialCandidateIDs);
+      let potentialCandidateIDsRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getPotentialCandidateIDs'));
+
+      const mappedPotentialCandidateIDs = potentialCandidateIDsRes.values.map((value: any) => value.items.map((item: any) => item.value.toString())).flat();
+      return mappedPotentialCandidateIDs;
+    }, []
+  );
+
+  const getCandidate = useCallback(
+    async ({ electionId, candidateId }: any) => {
+      const candidateDetails: TypedValue[] = [
+        new BigUIntValue(electionId),
+        new BigUIntValue(candidateId)
+      ];
+
+      const candidateData = await smartContract.methodsExplicit
+        .getCandidate(candidateDetails)
+        .buildQuery();
+
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
+      let queryResponse = await proxyNetworkProvider.queryContract(candidateData);
+      let candidateDataRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getCandidate'));
+
+      const candidateDataParsed: Candidate[] = candidateDataRes.values.map((value: any) => {
+        const candidateData: Map<string, Field> = value.fieldsByName;
+        return {
+          name: candidateData.get('name')?.value.toString() ?? '',
+          description: candidateData.get('description')?.value.toString() ?? '',
+          creator: candidateData.get('creator')?.value.toString() ?? '',
+          id: candidateId
+        };
+      });
+
+      return candidateDataParsed[0];
+    }, []
+  );
+
+  const getElectionData = useCallback(
+    async ({ electionId }: any) => {
+      const electionDetails: TypedValue[] = [
+        new BigUIntValue(electionId)
+      ];
+
+      const electionData = await smartContract.methodsExplicit
+        .getElectionData(electionDetails)
+        .buildQuery();
+
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
+      let queryResponse = await proxyNetworkProvider.queryContract(electionData);
+
+
+      let electionDataRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getElectionData'));
+
+      const electionDataParsed = electionDataRes.values.map((value: any) => {
+        const electionData: Map<string, Field> = value.fieldsByName;
+        const start_time = electionData.get('start_time')?.value.valueOf().toNumber() * 1000;
+        const end_time = electionData.get('end_time')?.value.valueOf().toNumber() * 1000;
+        const election_type = electionData.get('election_type')?.value.valueOf().name as ElectionType;
+
+        return {
+          id: electionId,
+          name: electionData.get('name')?.value.toString(),
+          description: electionData.get('description')?.value.toString(),
+          start_time: start_time,
+          end_time: end_time,
+          election_type: election_type,
+          ended: electionData.get('ended')?.value.valueOf(),
+          admin: electionData.get('admin')?.value.toString()
+        };
+      });
+
+      console.log("Election Data Parsed: ", electionDataParsed);
+      return electionDataParsed[0];
+    }, []
+  );
+
+
   const getElectionIdList = useCallback(
     async () => {
       const electionIdList = await smartContract.methodsExplicit
         .getElectionIDList()
         .buildQuery();
 
-      const proxyNetworkProvider = new ProxyNetworkProvider(API_URL);
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
       let queryResponse = await proxyNetworkProvider.queryContract(electionIdList);
       let electionIdListRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getElectionIDList'));
 
-      const mappedElectionIdList = electionIdListRes.values.map((value: any) => value.items[0].value.toString());
+      const mappedElectionIdList = electionIdListRes.values.map((value: any) => value.items.map((item: any) => item.value.toString())).flat();
       return mappedElectionIdList;
+    }, []
+  );
+
+  const getElectionResults = useCallback(
+    async ({ electionId }: { electionId: string }) => {
+      const args = [
+        new BigUIntValue(electionId)
+      ];
+
+      const electionResults = await smartContract.methodsExplicit
+        .results(args)
+        .buildQuery();
+
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
+      let queryResponse = await proxyNetworkProvider.queryContract(electionResults);
+      let electionResultsRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('results'));
+
+      const winnerCandidateId = electionResultsRes.values[0].valueOf().toNumber();
+      const candidate = await getCandidate({ electionId, candidateId: winnerCandidateId });
+      return candidate;
     }, []
   );
 
@@ -104,7 +437,7 @@ export const useSendPingPongTransaction = ({
         .getCandidateFee()
         .buildQuery();
 
-      const proxyNetworkProvider = new ProxyNetworkProvider(API_URL);
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
       let queryResponse = await proxyNetworkProvider.queryContract(candidateFeeQuery);
       let candidateFeeRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getCandidateFee'));
 
@@ -124,8 +457,8 @@ export const useSendPingPongTransaction = ({
         new StringValue(name),
         new StringValue(description),
         new BigIntValue(0),
-        new BigUIntValue(start_time),
-        new BigUIntValue(end_time),
+        new BigUIntValue(start_time / 1000),
+        new BigUIntValue(end_time / 1000)
       ];
 
       const registerElection = smartContract.methodsExplicit
@@ -142,15 +475,226 @@ export const useSendPingPongTransaction = ({
       });
 
       sessionStorage.setItem(type, sessionId);
-      setPingPongSessionId(sessionId);
+      setElectionSessionId(sessionId);
     }, []
   );
+
+  const submitCandidancy = useCallback(
+    async ({ electionId, name, description, fee }: any) => {
+      clearAllTransactions();
+
+      const candidancyDetails: TypedValue[] = [
+        new BigIntValue(electionId),
+        new StringValue(name),
+        new StringValue(description)
+      ];
+
+      const submitCandidancy = smartContract.methodsExplicit
+        .submitCandidancy(candidancyDetails)
+        .withSender(new Address(address))
+        .withValue(new BigUIntValue(fee))
+        .withGasLimit(60000000)
+        .withChainID(getChainId())
+        .buildTransaction();
+
+      const sessionId = await signAndSendTransactions({
+        transactions: [submitCandidancy],
+        callbackRoute: '/dashboard',
+        transactionsDisplayInfo: SUBMIT_CANDIDANCY_INFO
+      });
+
+      sessionStorage.setItem(type, sessionId);
+      setElectionSessionId(sessionId);
+    }, []
+  );
+
+  const registerCandidate = useCallback(
+    async ({ electionId, candidateId }: any) => {
+      clearAllTransactions();
+
+      const candidateDetails: TypedValue[] = [
+        new BigIntValue(electionId),
+        new BigIntValue(candidateId)
+      ];
+
+      const registerCandidate = smartContract.methodsExplicit
+        .registerCandidate(candidateDetails)
+        .withSender(new Address(address))
+        .withGasLimit(60000000)
+        .withChainID(getChainId())
+        .buildTransaction();
+
+      const sessionId = await signAndSendTransactions({
+        transactions: [registerCandidate],
+        callbackRoute: '/dashboard',
+        transactionsDisplayInfo: REGISTER_CANDIDATE_INFO
+      });
+
+      sessionStorage.setItem(type, sessionId);
+      setElectionSessionId(sessionId);
+    }, []
+  );
+
+  const registerSelf = useCallback(
+    async ({ electionId, verification_data }: any) => {
+      clearAllTransactions();
+
+      const selfDetails: TypedValue[] = [
+        new BigIntValue(electionId),
+        new StringValue(verification_data)
+      ];
+
+      const registerSelf = smartContract.methodsExplicit
+        .registerSelf(selfDetails)
+        .withSender(new Address(address))
+        .withGasLimit(60000000)
+        .withChainID(getChainId())
+        .buildTransaction();
+
+      const sessionId = await signAndSendTransactions({
+        transactions: [registerSelf],
+        callbackRoute: '/dashboard',
+        transactionsDisplayInfo: REGISTER_SELF_INFO
+      });
+
+      sessionStorage.setItem(type, sessionId);
+      setElectionSessionId(sessionId);
+    }, []
+  );
+
+  const registerVoter = useCallback(
+    async ({ electionId, voter_address }: any) => {
+      clearAllTransactions();
+
+      const voterDetails: TypedValue[] = [
+        new BigIntValue(electionId),
+        new AddressValue(voter_address)
+      ];
+
+      const registerVoter = smartContract.methodsExplicit
+        .registerVoter(voterDetails)
+        .withSender(new Address(address))
+        .withGasLimit(60000000)
+        .withChainID(getChainId())
+        .buildTransaction();
+
+      const sessionId = await signAndSendTransactions({
+        transactions: [registerVoter],
+        callbackRoute: '/dashboard',
+        transactionsDisplayInfo: REGISTER_VOTER_INFO
+      });
+
+      sessionStorage.setItem(type, sessionId);
+      setElectionSessionId(sessionId);
+    }, []
+  );
+
+  const vote = useCallback(
+    async ({ electionId, votes }: any) => {
+      clearAllTransactions();
+
+      let voteDetails: TypedValue[] = [
+        new BigIntValue(electionId)
+      ];
+
+      for (let i = 0; i < votes.length; i++) {
+        voteDetails.push(new BigIntValue(votes[i]));
+      }
+
+      const voteTransaction = smartContract.methodsExplicit
+        .vote(voteDetails)
+        .withSender(new Address(address))
+        .withGasLimit(60000000)
+        .withChainID(getChainId())
+        .buildTransaction();
+
+      const sessionId = await signAndSendTransactions({
+        transactions: [voteTransaction],
+        callbackRoute: '/dashboard',
+        transactionsDisplayInfo: VOTE_INFO
+      });
+
+      sessionStorage.setItem(type, sessionId);
+      setElectionSessionId(sessionId);
+    }, []
+  );
+
+  // endElection
+  const endElection = useCallback(
+    async ({ electionId }: any) => {
+      clearAllTransactions();
+
+      const electionDetails: TypedValue[] = [
+        new BigIntValue(electionId)
+      ];
+
+      const endElection = smartContract.methodsExplicit
+        .endElection(electionDetails)
+        .withSender(new Address(address))
+        .withGasLimit(60000000)
+        .withChainID(getChainId())
+        .buildTransaction();
+
+      const sessionId = await signAndSendTransactions({
+        transactions: [endElection],
+        callbackRoute: '/dashboard',
+        transactionsDisplayInfo: END_ELECTION_INFO
+      });
+
+      sessionStorage.setItem(type, sessionId);
+      setElectionSessionId(sessionId);
+    }, []
+  );
+
+  // makeDispute: electionId: u64, dispute_name: String, dispute_description: String
+  const makeDispute = useCallback(
+    async ({ electionId, dispute_name, dispute_description }: any) => {
+      clearAllTransactions();
+
+      const disputeDetails: TypedValue[] = [
+        new BigIntValue(electionId),
+        new StringValue(dispute_name),
+        new StringValue(dispute_description)
+      ];
+
+      const makeDispute = smartContract.methodsExplicit
+        .makeDispute(disputeDetails)
+        .withSender(new Address(address))
+        .withGasLimit(60000000)
+        .withChainID(getChainId())
+        .buildTransaction();
+
+      const sessionId = await signAndSendTransactions({
+        transactions: [makeDispute],
+        callbackRoute: '/dashboard',
+        transactionsDisplayInfo: MAKE_DISPUTE_INFO
+      });
+
+      sessionStorage.setItem(type, sessionId);
+      setElectionSessionId(sessionId);
+    }, []
+  );
+
+
 
   return {
     getElectionIdList,
     getCandidateFee,
     getDisputeIDList,
     registerElection,
-    transactionStatus
+    submitCandidancy,
+    getElectionList,
+    getElectionData,
+    getPotentialCandidates,
+    getCandidates,
+    getCandidate,
+    registerCandidate,
+    registerSelf,
+    registerVoter,
+    vote,
+    endElection,
+    makeDispute,
+    transactionStatus,
+    getElectionResults
   };
 };
