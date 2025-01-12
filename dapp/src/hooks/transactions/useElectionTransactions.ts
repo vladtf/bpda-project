@@ -118,6 +118,8 @@ export const useSendPingPongTransaction = ({
 
   const registerElection = useCallback(
     async ({ name, description, start_time, end_time }: any) => {
+      clearAllTransactions();
+
       const electionDetails: TypedValue[] = [
         new StringValue(name),
         new StringValue(description),
@@ -145,12 +147,6 @@ export const useSendPingPongTransaction = ({
   );
 
   return {
-    sendPingTransaction,
-    sendPingTransactionFromAbi,
-    sendPongTransaction,
-    sendPongTransactionFromAbi,
-    sendPingTransactionFromService,
-    sendPongTransactionFromService,
     getElectionIdList,
     getCandidateFee,
     getDisputeIDList,
