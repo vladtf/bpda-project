@@ -15,7 +15,7 @@ import { GAS_PRICE, SessionEnum, VERSION } from 'localConstants';
 import { getChainId } from 'utils/getChainId';
 import { smartContract } from 'utils/smartContract';
 import { Address, ProxyNetworkProvider } from 'utils/sdkDappCore';
-import { AddressValue, BigIntValue, BigUIntValue, Field, ResultsParser, StringValue, TypedValue, VariadicType, VariadicValue } from '@multiversx/sdk-core/out';
+import { AddressValue, BigIntValue, BigUIntValue, BooleanValue, Field, ResultsParser, StringValue, TypedValue, VariadicType, VariadicValue } from '@multiversx/sdk-core/out';
 
 export type Candidate = {
   id: number;
@@ -127,15 +127,19 @@ export const useSendElectionTransaction = ({
 
   const getDisputeIDList = useCallback(
     async ({ electionId }: any) => {
+      const args = [
+        new BigUIntValue(electionId)
+      ];
+
       const disputeIdList = await smartContract.methodsExplicit
-        .getDisputeIDList(electionId)
+        .getDisputeIDList(args)
         .buildQuery();
 
       const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
       let queryResponse = await proxyNetworkProvider.queryContract(disputeIdList);
       let disputeIdListRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getDisputeIDList'));
 
-      const mappedDisputeIdList = disputeIdListRes.values.map((value: any) => value.items[0].value.toString());
+      const mappedDisputeIdList = disputeIdListRes.values.map((value: any) => value.items.map((item: any) => item.value.toString())).flat();
       return mappedDisputeIdList;
     }, []
   );
@@ -342,7 +346,35 @@ export const useSendElectionTransaction = ({
       return candidateFee;
     }, []);
 
+  const getDispute = useCallback(
+    async (electionId: string, disputeId: string) => {
+      const args: TypedValue[] = [
+        new BigUIntValue(electionId),
+        new BigUIntValue(disputeId)
+      ];
 
+      const disputeQuery = await smartContract.methodsExplicit
+        .getDispute(args)
+        .buildQuery();
+
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
+      let queryResponse = await proxyNetworkProvider.queryContract(disputeQuery);
+      let disputeRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getDispute'));
+
+      const disputeData: Dispute[] = disputeRes.values.map((value: any) => {
+        const disputeFields: Map<string, Field> = value.fieldsByName;
+        return {
+          name: disputeFields.get('name')?.value.toString() ?? '',
+          description: disputeFields.get('description')?.value.toString() ?? '',
+          creator: disputeFields.get('creator')?.value.toString() ?? '',
+          // resolved: disputeFields.get('resolved')?.value.toBoolean() ?? false,
+          // result_adjusted: disputeFields.get('result_adjusted')?.value.toBoolean() ?? false
+        };
+      }) ?? [];
+
+      return disputeData[0];
+    }, []
+  );
 
   const registerElection = useCallback(
     async ({ name, description, start_time, end_time }: any) => {
@@ -570,7 +602,37 @@ export const useSendElectionTransaction = ({
     }, []
   );
 
+  const resolveDispute = useCallback(
+    async ({ electionId, disputeId, valid }: any) => {
+      clearAllTransactions();
 
+      const disputeDetails: TypedValue[] = [
+        new BigUIntValue(electionId),
+        new BigUIntValue(disputeId),
+        new BooleanValue(valid)
+      ];
+
+      const resolveDispute = smartContract.methodsExplicit
+        .resolveDispute(disputeDetails)
+        .withSender(new Address(address))
+        .withGasLimit(60000000)
+        .withChainID(getChainId())
+        .buildTransaction();
+
+      const sessionId = await signAndSendTransactions({
+        transactions: [resolveDispute],
+        callbackRoute: '/dashboard',
+        transactionsDisplayInfo: {
+          processingMessage: 'Processing Resolve Dispute transaction',
+          errorMessage: 'An error has occurred during Resolve Dispute',
+          successMessage: 'Resolve Dispute transaction successful'
+        }
+      });
+
+      sessionStorage.setItem(type, sessionId);
+      setElectionSessionId(sessionId);
+    }, []
+  );
 
   return {
     getElectionIdList,
@@ -590,6 +652,8 @@ export const useSendElectionTransaction = ({
     endElection,
     makeDispute,
     transactionStatus,
-    getElectionResults
+    getElectionResults,
+    getDispute,
+    resolveDispute
   };
 };

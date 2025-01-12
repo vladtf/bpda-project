@@ -517,11 +517,16 @@ pub trait BackendSc {
         return dispute_id;
     }
 
-    // #[endpoint(resolveDispute)]
-    // fn resolve_dispute(&self) -> ManagedAddress {
-    //     return self.blockchain().get_caller();
-    // }
+    #[endpoint(resolveDispute)]
+    fn resolve_dispute(&self, election_id: ElectionID, dispute_id: DisputeID, valid: bool) {
+        require!(self.election_id_list().contains(&election_id), "Election does not exist");
+        require!(self.dispute_id_list(election_id).contains(&dispute_id), "Dispute does not exist");
 
+        self.dispute(election_id, dispute_id).update(|dispute| {
+            dispute.resolved = true;
+            dispute.result_adjusted = valid;
+        });
+    }
 
     #[view(getCurrentBlockTimestamp)]
     fn get_block_timestamp(&self) -> u64 {

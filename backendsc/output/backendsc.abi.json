@@ -421,6 +421,25 @@
             ]
         },
         {
+            "name": "resolveDispute",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "election_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "dispute_id",
+                    "type": "u16"
+                },
+                {
+                    "name": "valid",
+                    "type": "bool"
+                }
+            ],
+            "outputs": []
+        },
+        {
             "name": "getCurrentBlockTimestamp",
             "mutability": "readonly",
             "inputs": [],

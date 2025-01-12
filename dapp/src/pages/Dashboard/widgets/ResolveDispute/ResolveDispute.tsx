@@ -21,6 +21,8 @@ export const ResolveDispute = ({ callbackRoute }: WidgetProps) => {
   const {
     getElectionIdList,
     getDisputeIDList,
+    getDispute,
+    resolveDispute
   } = useSendElectionTransaction({
     type: SessionEnum.abiElectionSessionId
   });
@@ -42,7 +44,15 @@ export const ResolveDispute = ({ callbackRoute }: WidgetProps) => {
     const fetchDisputes = async () => {
       if (electionId) {
         try {
-          setDisputes(await getDisputeIDList(electionId));
+          console.log('Fetching disputes for election:', electionId);
+          const disputeIDs = await getDisputeIDList({ electionId });
+          console.log('Dispute IDs:', disputeIDs);
+          const allDisputes = [];
+          for (const dID of disputeIDs) {
+            const disputeData = await getDispute(electionId, dID);
+            allDisputes.push({ id: dID, ...disputeData });
+          }
+          setDisputes(allDisputes);
         } catch (error) {
           console.error('Error fetching disputes:', error);
           setError(error.response?.data?.error || 'Failed to fetch disputes. Please try again.');
@@ -57,12 +67,12 @@ export const ResolveDispute = ({ callbackRoute }: WidgetProps) => {
     e.preventDefault();
     setError(null); // Reset error state
     try {
-      const res = await axios.post('/resolve_dispute', {
+      await resolveDispute({
+        electionId,
         disputeId,
         valid
-      }, { baseURL: GATEWAY_URL });
-      setResponse(res.data);
-      console.log('Dispute resolved:', res.data);
+      });
+      setResponse('Dispute resolved successfully');
     } catch (error: any) {
       console.error('Error resolving dispute:', error);
       setError(error.response?.data?.error || 'Failed to resolve dispute. Please try again.');
@@ -72,7 +82,7 @@ export const ResolveDispute = ({ callbackRoute }: WidgetProps) => {
   const handleDisputeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = e.target.value;
     setDisputeId(selectedId);
-    const dispute = disputes.find(d => d.id === selectedId);
+    const dispute = disputes.find(d => d.id.toString() === selectedId);
     setSelectedDispute(dispute);
   };
 
@@ -130,10 +140,8 @@ export const ResolveDispute = ({ callbackRoute }: WidgetProps) => {
       </form>
       {selectedDispute && (
         <div className='mt-4 p-4 bg-gray-100 rounded-md'>
-          <h4 className='font-semibold'>Dispute Details</h4>
-          <p><strong>Reason:</strong> {selectedDispute.reason}</p>
-          <p><strong>Resolved:</strong> {selectedDispute.resolved ? 'Yes' : 'No'}</p>
-          <p><strong>Result Adjusted:</strong> {selectedDispute.result_adjusted ? 'Yes' : 'No'}</p>
+          <h3 className='font-semibold mb-2'>Selected Dispute</h3>
+          <pre>{JSON.stringify(selectedDispute, null, 2)}</pre>
         </div>
       )}
       <OutputContainer>
