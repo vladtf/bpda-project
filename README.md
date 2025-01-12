@@ -3,6 +3,7 @@
 - [Blockchain Protocols - Project](#blockchain-protocols---project)
   - [Voting Web Application Based on the MultiversX Blockchain](#voting-web-application-based-on-the-multiversx-blockchain)
     - [Team Members](#team-members)
+    - [Repository](#repository)
     - [Purpose of the Project](#purpose-of-the-project)
     - [Needs It Tries to Satisfy](#needs-it-tries-to-satisfy)
     - [Components of the Project](#components-of-the-project)
@@ -25,6 +26,10 @@
 
 - [Vladislav Tiftilov](https://github.com/vladtf)
 - [Ravariu Eugen](https://github.com/ravariu-eugen)
+
+### Repository
+
+- [Voting Web Application Based on the MultiversX Blockchain](https://github.com/vladtf/election-app-multiversx)
 
 ### Purpose of the Project
 
