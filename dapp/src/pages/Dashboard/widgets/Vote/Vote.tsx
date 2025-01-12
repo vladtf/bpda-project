@@ -20,7 +20,7 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
     getCandidates,
     vote
   } = useSendElectionTransaction({
-    type: SessionEnum.abiPingPongSessionId
+    type: SessionEnum.abiElectionSessionId
   });
 
   useEffect(() => {

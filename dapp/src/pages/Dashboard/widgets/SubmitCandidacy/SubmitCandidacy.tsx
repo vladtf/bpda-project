@@ -25,7 +25,7 @@ export const SubmitCandidacy = ({ callbackRoute }: WidgetProps) => {
     submitCandidancy,
     getElectionData
   } = useSendElectionTransaction({
-    type: SessionEnum.abiPingPongSessionId
+    type: SessionEnum.abiElectionSessionId
   });
 
   useEffect(() => {

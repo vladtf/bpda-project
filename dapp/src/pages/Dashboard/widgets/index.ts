@@ -1,4 +1,3 @@
-export * from './PingPongAbi';
 export * from './Account';
 export * from './SignMessage';
 export * from './NativeAuth';

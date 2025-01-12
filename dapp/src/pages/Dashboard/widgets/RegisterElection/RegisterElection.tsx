@@ -18,7 +18,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
   const {
     registerElection
   } = useSendElectionTransaction({
-    type: SessionEnum.abiPingPongSessionId
+    type: SessionEnum.abiElectionSessionId
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

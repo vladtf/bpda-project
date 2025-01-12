@@ -22,7 +22,7 @@ export const ResolveDispute = ({ callbackRoute }: WidgetProps) => {
     getElectionIdList,
     getDisputeIDList,
   } = useSendElectionTransaction({
-    type: SessionEnum.abiPingPongSessionId
+    type: SessionEnum.abiElectionSessionId
   });
 
   useEffect(() => {

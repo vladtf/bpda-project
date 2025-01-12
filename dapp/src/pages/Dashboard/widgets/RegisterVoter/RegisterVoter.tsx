@@ -19,7 +19,7 @@ export const RegisterVoter = ({ callbackRoute }: WidgetProps) => {
     registerVoter,
     registerSelf
   } = useSendElectionTransaction({
-    type: SessionEnum.abiPingPongSessionId
+    type: SessionEnum.abiElectionSessionId
   });
 
   useEffect(() => {

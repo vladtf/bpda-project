@@ -18,7 +18,7 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
   const {
     getElectionIdList
   } = useSendElectionTransaction({
-    type: SessionEnum.abiPingPongSessionId
+    type: SessionEnum.abiElectionSessionId
   });
 
   const fetchData = async () => {

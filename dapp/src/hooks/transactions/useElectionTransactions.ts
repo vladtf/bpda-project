@@ -14,19 +14,8 @@ import {
 import { GAS_PRICE, SessionEnum, VERSION } from 'localConstants';
 import { getChainId } from 'utils/getChainId';
 import { smartContract } from 'utils/smartContract';
-import {
-  PingRawProps,
-  PingPongServiceProps,
-  PongRawProps
-} from 'types/pingPong.types';
-import { newTransaction } from 'helpers/sdkDappHelpers';
 import { Address, ProxyNetworkProvider } from 'utils/sdkDappCore';
 import { AddressValue, BigIntValue, BigUIntValue, Field, ResultsParser, StringValue, TypedValue, VariadicType, VariadicValue } from '@multiversx/sdk-core/out';
-
-type PingPongTransactionProps = {
-  type: SessionEnum;
-};
-
 
 export type Candidate = {
   id: number;
@@ -109,13 +98,17 @@ const MAKE_DISPUTE_INFO = {
   successMessage: 'Make Dispute transaction successful'
 };
 
+export type ElectionTransactionProps = {
+  type: SessionEnum;
+};
+
 export const useSendElectionTransaction = ({
   type
-}: PingPongTransactionProps) => {
+}: ElectionTransactionProps) => {
   // Needed in order to differentiate widgets between each other
   // By default sdk-dapp takes the last sessionId available which will display on every widget the same transaction
   // this usually appears on page refreshes
-  const [pingPongSessionId, setElectionSessionId] = useState(
+  const [electionSessionId, setElectionSessionId] = useState(
     sessionStorage.getItem(type)
   );
 
@@ -123,13 +116,13 @@ export const useSendElectionTransaction = ({
   const { address, account } = useGetAccountInfo();
 
   const transactionStatus = useTrackTransactionStatus({
-    transactionId: pingPongSessionId ?? '0'
+    transactionId: electionSessionId ?? '0'
   });
 
   const clearAllTransactions = () => {
     removeAllSignedTransactions();
     removeAllTransactionsToSign();
-    deleteTransactionToast(pingPongSessionId ?? '');
+    deleteTransactionToast(electionSessionId ?? '');
   };
 
   const getDisputeIDList = useCallback(

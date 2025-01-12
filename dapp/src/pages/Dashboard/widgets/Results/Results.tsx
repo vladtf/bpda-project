@@ -14,7 +14,7 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
   const [elections, setElections] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const { getElectionResults, getElectionIdList } = useSendElectionTransaction({ type: SessionEnum.abiPingPongServiceSessionId });
+  const { getElectionResults, getElectionIdList } = useSendElectionTransaction({ type: SessionEnum.abiElectionSessionId });
 
   useEffect(() => {
     const fetchElections = async () => {

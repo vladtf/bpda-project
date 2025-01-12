@@ -16,7 +16,7 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
     getElectionIdList,
     endElection
   } = useSendElectionTransaction({
-    type: SessionEnum.abiPingPongSessionId
+    type: SessionEnum.abiElectionSessionId
   });
 
   useEffect(() => {
