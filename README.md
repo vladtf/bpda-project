@@ -12,6 +12,7 @@
       - [2. Candidate Registration](#2-candidate-registration)
       - [3. Candidate Approval](#3-candidate-approval)
       - [4. Voter Registration](#4-voter-registration)
+      - [4a. Voter Registration by Admin](#4a-voter-registration-by-admin)
       - [5. Voting](#5-voting)
       - [6. Results](#6-results)
       - [7. Dispute Resolution](#7-dispute-resolution)
@@ -75,74 +76,41 @@ The voting web application includes the following components:
 
 ```mermaid
 flowchart TB
+    subgraph A[Election Admin]
+        A_create[registerElection]
+        A_regCand[registerCandidate]
+        A_regVoter[registerVoter]
+        A_end[endElection]
+    end
 
-%% Define Subgraphs as Swimlanes
-subgraph V[Voter]
-  direction TB
-  V_ID[Submit ID & Eligibility Info to Eligibility Service]
-  V_Cred["Receive Voter Credential (Soulbound Token/Whitelist)"]
-  V_Sign[Sign Candidate Petition]
-  V_Vote[Cast Rated-Based Votes for Multiple Candidates]
-end
+    subgraph C[Candidate]
+        C_submit[submitCandidancy]
+    end
 
-subgraph E[Eligibility Service]
-  direction TB
-  E_Verify[Verify Identity & Eligibility]
-  E_Issue[Issue Voter Credential if Eligible]
-end
+    subgraph V[Voter]
+        V_self[registerSelf]
+        V_vote[vote]
+    end
 
-subgraph A[Election Admin]
-  direction TB
-  A_Create["Register Election (name, times, rules, fee)"]
-  A_End[End Election & Request Tally]
-end
+    subgraph SC[Smart Contract]
+        SC_store[Store Election & Candidate\nData]
+        SC_checkFee[Check Candidate Fee]
+        SC_approve[Approve Candidate]
+        SC_regVoter[Register Voter Eligibility]
+        SC_recordVote[Store Vote]
+        SC_fin[Election Ends]
+        SC_dispute[makeDispute]
+        SC_results[Compute & Return Results]
+    end
 
-subgraph C[Candidate]
-  direction TB
-  C_Reg[Submit Candidate Details & Fee]
-end
-
-subgraph SC[Smart Contract]
-  direction TB
-  SC_Store["Store Election Data (electionId)"]
-  SC_ValCand[Validate Candidate Fee & Uniqueness]
-  SC_Mint["Mint Candidate NFT (Pending)"]
-  SC_SignCheck[Check Voter Eligibility & Sign Uniqueness]
-  SC_IncSign[Increment Candidate Signature Count]
-  SC_Approve[Candidate Approved after Threshold?]
-  SC_VerifyVote[Verify Voter & Record Votes]
-  SC_Tally[Tally Votes & Publish Results]
-  SC_Dispute[Open Dispute Window]
-  SC_Adjust[Adjust Results / Re-Tally if Dispute Valid]
-end
-
-subgraph D[Dispute Resolution Body]
-  direction TB
-  D_Receive[Receive Disputes]
-  D_Valid[Valid Dispute?]
-end
-
-%% Flow Start
-V_ID --> E_Verify
-E_Verify -->|Eligible| E_Issue --> V_Cred
-E_Verify -->|Not Eligible| X[Stop]
-
-%% Election Creation
-A_Create --> SC_Store
-
-%% Candidate Registration
-C_Reg --> SC_ValCand --> SC_Mint
-
-%% Signature Collection
-V_Sign --> SC_SignCheck --> SC_IncSign --> SC_Approve
-
-%% Voting
-V_Vote --> SC_VerifyVote
-
-%% End and Tally
-A_End --> SC_Tally --> SC_Dispute --> D_Receive --> D_Valid
-D_Valid -->|Yes| SC_Adjust --> SC_Tally
-D_Valid -->|No| X[Results Finalized]
+    A_create --> SC_store
+    C_submit --> SC_checkFee --> SC_store
+    A_regCand --> SC_approve --> SC_store
+    V_self --> SC_regVoter
+    A_regVoter --> SC_regVoter
+    V_vote --> SC_recordVote
+    A_end --> SC_fin --> SC_results
+    SC_results --> SC_dispute
 ```
 
 #### 1. Election Registration
