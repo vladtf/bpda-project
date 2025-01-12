@@ -4,7 +4,7 @@ import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
 import { SessionEnum } from 'localConstants';
-import { useSendPingPongTransaction } from 'hooks';
+import { useSendElectionTransaction } from 'hooks';
 
 export const Explorer = ({ callbackRoute }: WidgetProps) => {
   // const [elections, setElections] = useState<any[]>([]);
@@ -17,7 +17,7 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
 
   const {
     getElectionIdList
-  } = useSendPingPongTransaction({
+  } = useSendElectionTransaction({
     type: SessionEnum.abiPingPongSessionId
   });
 

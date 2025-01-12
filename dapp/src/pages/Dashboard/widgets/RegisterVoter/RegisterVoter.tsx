@@ -3,7 +3,7 @@ import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
-import { useSendPingPongTransaction } from 'hooks';
+import { useSendElectionTransaction } from 'hooks';
 import { SessionEnum } from 'localConstants';
 
 export const RegisterVoter = ({ callbackRoute }: WidgetProps) => {
@@ -18,7 +18,7 @@ export const RegisterVoter = ({ callbackRoute }: WidgetProps) => {
     getElectionIdList,
     registerVoter,
     registerSelf
-  } = useSendPingPongTransaction({
+  } = useSendElectionTransaction({
     type: SessionEnum.abiPingPongSessionId
   });
 

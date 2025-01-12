@@ -5,7 +5,7 @@ import axios from 'axios';
 import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
-import { useSendPingPongTransaction } from 'hooks';
+import { useSendElectionTransaction } from 'hooks';
 import { SessionEnum } from 'localConstants';
 
 export const Dispute = ({ callbackRoute }: WidgetProps) => {
@@ -16,7 +16,7 @@ export const Dispute = ({ callbackRoute }: WidgetProps) => {
 
   const {
     getElectionIdList,
-  } = useSendPingPongTransaction({
+  } = useSendElectionTransaction({
     type: SessionEnum.abiPingPongSessionId
   });
 

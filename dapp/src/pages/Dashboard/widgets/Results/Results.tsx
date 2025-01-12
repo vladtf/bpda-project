@@ -6,7 +6,7 @@ import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
 import { SessionEnum } from 'localConstants';
-import { Candidate, useSendPingPongTransaction } from 'hooks';
+import { Candidate, useSendElectionTransaction } from 'hooks';
 
 export const Results = ({ callbackRoute }: WidgetProps) => {
   const [electionId, setElectionId] = useState<string>('');
@@ -14,7 +14,7 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
   const [elections, setElections] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const { getElectionResults, getElectionIdList } = useSendPingPongTransaction({ type: SessionEnum.abiPingPongServiceSessionId });
+  const { getElectionResults, getElectionIdList } = useSendElectionTransaction({ type: SessionEnum.abiPingPongServiceSessionId });
 
   useEffect(() => {
     const fetchElections = async () => {

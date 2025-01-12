@@ -3,7 +3,7 @@ import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
-import { Candidate, useSendPingPongTransaction } from 'hooks';
+import { Candidate, useSendElectionTransaction } from 'hooks';
 import { SessionEnum } from 'localConstants';
 import { BigIntValue, U16Value } from '@multiversx/sdk-core/out';
 
@@ -19,7 +19,7 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
     getElectionIdList,
     getCandidates,
     vote
-  } = useSendPingPongTransaction({
+  } = useSendElectionTransaction({
     type: SessionEnum.abiPingPongSessionId
   });
 

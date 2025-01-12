@@ -5,7 +5,7 @@ import axios from 'axios';
 import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
-import { useGetAccountInfo, useSendPingPongTransaction } from 'hooks';
+import { useGetAccountInfo, useSendElectionTransaction } from 'hooks';
 import { SessionEnum } from 'localConstants';
 
 export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
@@ -17,7 +17,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
 
   const {
     registerElection
-  } = useSendPingPongTransaction({
+  } = useSendElectionTransaction({
     type: SessionEnum.abiPingPongSessionId
   });
 

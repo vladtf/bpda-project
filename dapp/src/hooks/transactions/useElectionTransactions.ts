@@ -28,23 +28,6 @@ type PingPongTransactionProps = {
 };
 
 
-// "Candidate": {
-//   "type": "struct",
-//   "fields": [
-//       {
-//           "name": "name",
-//           "type": "bytes"
-//       },
-//       {
-//           "name": "description",
-//           "type": "bytes"
-//       },
-//       {
-//           "name": "creator",
-//           "type": "Address"
-//       }
-//   ]
-// },
 export type Candidate = {
   id: number;
   name: string;
@@ -52,31 +35,6 @@ export type Candidate = {
   creator: string;
 };
 
-// "Dispute": {
-//   "type": "struct",
-//   "fields": [
-//       {
-//           "name": "name",
-//           "type": "bytes"
-//       },
-//       {
-//           "name": "description",
-//           "type": "bytes"
-//       },
-//       {
-//           "name": "creator",
-//           "type": "Address"
-//       },
-//       {
-//           "name": "resolved",
-//           "type": "bool"
-//       },
-//       {
-//           "name": "result_adjusted",
-//           "type": "bool"
-//       }
-//   ]
-// },
 export type Dispute = {
   name: string;
   description: string;
@@ -84,39 +42,7 @@ export type Dispute = {
   resolved: boolean;
   result_adjusted: boolean;
 };
-// "ElectionData": {
-//   "type": "struct",
-//   "fields": [
-//       {
-//           "name": "name",
-//           "type": "bytes"
-//       },
-//       {
-//           "name": "description",
-//           "type": "bytes"
-//       },
-//       {
-//           "name": "start_time",
-//           "type": "u64"
-//       },
-//       {
-//           "name": "end_time",
-//           "type": "u64"
-//       },
-//       {
-//           "name": "election_type",
-//           "type": "ElectionType"
-//       },
-//       {
-//           "name": "ended",
-//           "type": "bool"
-//       },
-//       {
-//           "name": "admin",
-//           "type": "Address"
-//       }
-//   ]
-// },
+
 export type ElectionData = {
   id: number;
   name: string;
@@ -127,33 +53,9 @@ export type ElectionData = {
   ended: boolean;
   admin: string;
 };
-// "ElectionType": {
-//   "type": "enum",
-//   "variants": [
-//       {
-//           "name": "Plurality",
-//           "discriminant": 0
-//       },
-//       {
-//           "name": "Approval",
-//           "discriminant": 1
-//       },
-//       {
-//           "name": "SingleTransferableVote",
-//           "discriminant": 2
-//       }
-//   ]
-// },
+
 export type ElectionType = 'Plurality' | 'Approval' | 'SingleTransferableVote';
-// "Vote": {
-//   "type": "struct",
-//   "fields": [
-//       {
-//           "name": "candidates",
-//           "type": "List<u16>"
-//       }
-//   ]
-// }
+
 export type Vote = {
   candidates: number[];
 };
@@ -207,7 +109,7 @@ const MAKE_DISPUTE_INFO = {
   successMessage: 'Make Dispute transaction successful'
 };
 
-export const useSendPingPongTransaction = ({
+export const useSendElectionTransaction = ({
   type
 }: PingPongTransactionProps) => {
   // Needed in order to differentiate widgets between each other
