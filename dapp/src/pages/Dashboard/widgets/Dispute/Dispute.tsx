@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import axios from 'axios';
-import { API_URL } from 'config';
+import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
 import { useSendPingPongTransaction } from 'hooks';
@@ -38,7 +38,7 @@ export const Dispute = ({ callbackRoute }: WidgetProps) => {
       const res = await axios.post('/dispute', {
         electionId,
         reason
-      }, { baseURL: API_URL });
+      }, { baseURL: GATEWAY_URL });
       setResponse(res.data);
       console.log('Dispute filed:', res.data);
     } catch (error) {

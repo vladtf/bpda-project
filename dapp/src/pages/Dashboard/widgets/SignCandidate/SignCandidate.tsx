@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import axios from 'axios';
-import { API_URL } from 'config';
+import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
 import { useGetAccountInfo } from 'hooks';
@@ -19,7 +19,7 @@ export const SignCandidate = ({ callbackRoute }: WidgetProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const electionsRes = await axios.get('/elections', { baseURL: API_URL });
+        const electionsRes = await axios.get('/elections', { baseURL: GATEWAY_URL });
         setElections(electionsRes.data.elections);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -35,7 +35,7 @@ export const SignCandidate = ({ callbackRoute }: WidgetProps) => {
         try {
           const res = await axios.get('/candidates', {
             params: { electionId },
-            baseURL: API_URL
+            baseURL: GATEWAY_URL
           });
           setCandidates(res.data.candidates);
         } catch (error) {
@@ -56,7 +56,7 @@ export const SignCandidate = ({ callbackRoute }: WidgetProps) => {
         electionId,
         candidateId
       }, {
-        baseURL: API_URL
+        baseURL: GATEWAY_URL
       });
       setResponse(res.data);
       console.log('Candidate signed:', res.data);

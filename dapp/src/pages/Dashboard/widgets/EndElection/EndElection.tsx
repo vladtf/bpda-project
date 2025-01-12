@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import axios from 'axios';
-import { API_URL } from 'config';
+import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
 import { useGetAccountInfo, useSendPingPongTransaction } from 'hooks';
@@ -39,7 +39,7 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
     e.preventDefault();
     setError(null); // Reset error state
     try {
-      const res = await axios.post('/end_election', { electionId, admin: adminAddress }, { baseURL: API_URL });
+      const res = await axios.post('/end_election', { electionId, admin: adminAddress }, { baseURL: GATEWAY_URL });
       setResponse(res.data);
       console.log('Election ended:', res.data);
     } catch (error: any) {
@@ -52,7 +52,7 @@ export const EndElection = ({ callbackRoute }: WidgetProps) => {
     const selectedId = e.target.value;
     setElectionId(selectedId);
     try {
-      const res = await axios.get(`/elections/${selectedId}`, { baseURL: API_URL });
+      const res = await axios.get(`/elections/${selectedId}`, { baseURL: GATEWAY_URL });
 
       setSelectedElection(res.data.election);
     } catch (error) {

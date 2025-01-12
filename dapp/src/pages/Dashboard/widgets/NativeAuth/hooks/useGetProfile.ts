@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { API_URL } from 'config';
+import { GATEWAY_URL } from 'config';
 import { ProfileType } from 'types';
 
 export const useGetProfile = () => {
@@ -11,7 +11,7 @@ export const useGetProfile = () => {
     try {
       setIsLoading(true);
       const { data } = await axios.get('/account', {
-        baseURL: API_URL
+        baseURL: GATEWAY_URL
       });
 
       if (data) {

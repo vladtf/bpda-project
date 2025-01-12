@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import axios from 'axios';
-import { API_URL } from 'config';
+import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
 import { useSendPingPongTransaction } from 'hooks';
@@ -38,7 +38,7 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
     try {
       const res = await axios.get('/results', {
         params: { electionId },
-        baseURL: API_URL
+        baseURL: GATEWAY_URL
       });
       const sortedResults = res.data.results.sort((a: any, b: any) => b.total_rating - a.total_rating);
       setResults({ ...res.data, results: sortedResults });

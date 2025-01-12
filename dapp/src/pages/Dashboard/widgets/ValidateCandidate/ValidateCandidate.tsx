@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import axios from 'axios';
-import { API_URL } from 'config';
+import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
 
@@ -18,7 +18,7 @@ export const ValidateCandidate = ({ callbackRoute }: WidgetProps) => {
   useEffect(() => {
     const fetchElections = async () => {
       try {
-        const res = await axios.get('/elections', { baseURL: API_URL });
+        const res = await axios.get('/elections', { baseURL: GATEWAY_URL });
         setElections(res.data.elections);
       } catch (error) {
         console.error('Error fetching elections:', error);
@@ -32,7 +32,7 @@ export const ValidateCandidate = ({ callbackRoute }: WidgetProps) => {
     const fetchCandidates = async () => {
       if (electionId) {
         try {
-          const res = await axios.get(`/candidates?electionId=${electionId}`, { baseURL: API_URL });
+          const res = await axios.get(`/candidates?electionId=${electionId}`, { baseURL: GATEWAY_URL });
           setCandidates(res.data.candidates);
         } catch (error) {
           console.error('Error fetching candidates:', error);
@@ -47,7 +47,7 @@ export const ValidateCandidate = ({ callbackRoute }: WidgetProps) => {
     e.preventDefault();
     setError(null); // Reset error state
     try {
-      const res = await axios.post('/validate_candidate', { electionId, candidateId }, { baseURL: API_URL });
+      const res = await axios.post('/validate_candidate', { electionId, candidateId }, { baseURL: GATEWAY_URL });
       setResponse(res.data);
       console.log('Candidate validated:', res.data);
     } catch (error: any) {

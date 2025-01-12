@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import axios from 'axios';
-import { API_URL } from 'config';
+import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
 import { useGetAccountInfo, useSendPingPongTransaction } from 'hooks';
@@ -48,7 +48,7 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
     const fetchCandidates = async () => {
       if (electionId) {
         try {
-          const res = await axios.get(`/candidates?electionId=${electionId}`, { baseURL: API_URL });
+          const res = await axios.get(`/candidates?electionId=${electionId}`, { baseURL: GATEWAY_URL });
           setCandidates(res.data.candidates);
         } catch (error) {
           console.error('Error fetching candidates:', error);
@@ -82,7 +82,7 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
         electionId,
         votes
       }, {
-        baseURL: API_URL
+        baseURL: GATEWAY_URL
       });
       console.log('Vote submitted:', res.data);
       const sortedResponse = res.data.intermediate_results.sort((a: any, b: any) => b.votes - a.votes);
