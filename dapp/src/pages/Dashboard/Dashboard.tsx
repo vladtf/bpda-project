@@ -33,7 +33,7 @@ const WIDGETS: WidgetType[] = [
     reference: 'https://yourdocs.com/submit-candidacy',
     anchor: 'submit-candidacy',
     role: 'voter',
-    step: 2
+    step: 1
   },
   {
     title: 'Register Candidate',
@@ -69,7 +69,7 @@ const WIDGETS: WidgetType[] = [
     reference: 'https://yourdocs.com/end-election',
     anchor: 'end-election',
     role: 'admin',
-    step: 4
+    step: 3
   },
   {
     title: 'Results',
@@ -96,7 +96,7 @@ const WIDGETS: WidgetType[] = [
     reference: 'https://yourdocs.com/resolve-dispute',
     anchor: 'resolve-dispute',
     role: 'admin',
-    step: 5
+    step: 4
   },
   {
     title: 'Explorer',
@@ -105,7 +105,7 @@ const WIDGETS: WidgetType[] = [
     reference: 'https://yourdocs.com/explorer',
     anchor: 'explorer',
     role: 'admin',
-    step: 6
+    step: 5
   },
   {
     title: 'Transactions',
