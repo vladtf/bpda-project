@@ -7,16 +7,21 @@ import { SessionEnum } from 'localConstants';
 import { useSendElectionTransaction } from 'hooks';
 
 export const Explorer = ({ callbackRoute }: WidgetProps) => {
-  // const [elections, setElections] = useState<any[]>([]);
   const [elections, setElections] = useState<any>([]);
   const [candidates, setCandidates] = useState<any[]>([]);
+  const [registeredCandidates, setRegisteredCandidates] = useState<any[]>([]);
   const [voters, setVoters] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const {
-    getElectionIdList
+    getElectionIdList,
+    getElectionList,
+    getPotentialCandidates,
+    getCandidates,
+    getRegisteredVoters,
+    getDisputes
   } = useSendElectionTransaction({
     type: SessionEnum.abiElectionSessionId
   });
@@ -24,19 +29,20 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // const [/* electionsRes, */ candidatesRes, votersRes, disputesRes] = await Promise.all([
-      //   // axios.get('/elections', { baseURL: GATEWAY_URL }),
-      //   axios.get('/candidates', { baseURL: GATEWAY_URL }),
-      //   axios.get('/voters', { baseURL: GATEWAY_URL }),
-      //   axios.get('/disputes', { baseURL: GATEWAY_URL })
-      // ]);
+      const electionList = await getElectionList();
+      setElections(electionList);
 
-      // // setElections(electionsRes.data.elections);
-      // setCandidates(candidatesRes.data.candidates);
-      // setVoters(votersRes.data.voters);
-      // setDisputes(disputesRes.data.disputes);
+      const potentialCandidatesList = await Promise.all(electionList.map(election => getPotentialCandidates({ electionId: election?.id })));
+      setCandidates(potentialCandidatesList.flat());
 
-      setElections(await getElectionIdList());
+      const registeredCandidatesList = await Promise.all(electionList.map(election => getCandidates({ electionId: election?.id })));
+      setRegisteredCandidates(registeredCandidatesList.flat());
+
+      const votersList = await Promise.all(electionList.map(election => getRegisteredVoters({ electionId: election?.id })));
+      setVoters(votersList.flat());
+
+      const disputesList = await Promise.all(electionList.map(election => getDisputes({ electionId: election?.id })));
+      setDisputes(disputesList.flat());
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Failed to fetch data. Please try again.');
@@ -66,8 +72,12 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
           <pre>{JSON.stringify(elections, null, 2)}</pre>
         </div>
         <div className='rounded-md'>
-          <h3 className='font-semibold mb-2'>Candidates</h3>
+          <h3 className='font-semibold mb-2'>Potential Candidates</h3>
           <pre>{JSON.stringify(candidates, null, 2)}</pre>
+        </div>
+        <div className='rounded-md'>
+          <h3 className='font-semibold mb-2'>Registered Candidates</h3>
+          <pre>{JSON.stringify(registeredCandidates, null, 2)}</pre>
         </div>
         <div className='rounded-md'>
           <h3 className='font-semibold mb-2'>Voters</h3>

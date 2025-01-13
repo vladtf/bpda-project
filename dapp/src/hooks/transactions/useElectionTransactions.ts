@@ -19,6 +19,7 @@ import { AddressValue, BigIntValue, BigUIntValue, BooleanValue, Field, ResultsPa
 
 export type Candidate = {
   id: number;
+  election_id: number;
   name: string;
   description: string;
   creator: string;
@@ -127,6 +128,8 @@ export const useSendElectionTransaction = ({
 
   const getDisputeIDList = useCallback(
     async ({ electionId }: any) => {
+      if (!electionId) return [];
+
       const args = [
         new BigUIntValue(electionId)
       ];
@@ -144,35 +147,12 @@ export const useSendElectionTransaction = ({
     }, []
   );
 
-  const getElectionList = useCallback(
-    async () => {
-      const electionList = await smartContract.methodsExplicit
-        .electionList()
-        .buildQuery();
-
-      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
-      let queryResponse = await proxyNetworkProvider.queryContract(electionList);
-      let electionListRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('electionList'));
-
-      const mappedElectionList: ElectionData[] = electionListRes.values.map((value: any) => {
-        const electionData = value.items.map((item: any) => item.value);
-        return {
-          id: '0',
-          name: electionData[0].toString(),
-          description: electionData[1].toString(),
-          start_time: electionData[2].toBigInt() / 1000,
-          end_time: electionData[3].toBigInt(),
-          election_type: electionData[4].toString(),
-          ended: electionData[5].toBoolean(),
-          admin: electionData[6].toString()
-        };
-      });
-      return mappedElectionList;
-    }, []
-  );
+  
 
   const getPotentialCandidates = useCallback(
     async ({ electionId }: any) => {
+      if (!electionId) return [];
+
       const potentialCandidateIds = await getPotentialCandidateIDs({ electionId });
       const candidates = await Promise.all(potentialCandidateIds.map(candidateId => getCandidate({ electionId, candidateId })));
       return candidates;
@@ -182,6 +162,8 @@ export const useSendElectionTransaction = ({
 
   const getCandidates = useCallback(
     async ({ electionId }: any) => {
+      if (!electionId) return [];
+
       const candidateIds = await getCandidateIds({ electionId });
       const candidates = await Promise.all(candidateIds.map(candidateId => getCandidate({ electionId, candidateId })));
       return candidates;
@@ -247,11 +229,20 @@ export const useSendElectionTransaction = ({
           name: candidateData.get('name')?.value.toString() ?? '',
           description: candidateData.get('description')?.value.toString() ?? '',
           creator: candidateData.get('creator')?.value.toString() ?? '',
-          id: candidateId
+          id: candidateId,
+          election_id: electionId
         };
       });
 
       return candidateDataParsed[0];
+    }, []
+  );
+
+  const getElectionList = useCallback(
+    async () => {
+      const electionIdList = await getElectionIdList();
+      const elections = await Promise.all(electionIdList.map(electionId => getElectionData({ electionId })));
+      return elections;
     }, []
   );
 
@@ -272,6 +263,7 @@ export const useSendElectionTransaction = ({
       let electionDataRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getElectionData'));
 
       const electionDataParsed = electionDataRes.values.map((value: any) => {
+        if (!value) return null;
         const electionData: Map<string, Field> = value.fieldsByName;
         const start_time = electionData.get('start_time')?.value.valueOf().toNumber() * 1000;
         const end_time = electionData.get('end_time')?.value.valueOf().toNumber() * 1000;
@@ -289,8 +281,35 @@ export const useSendElectionTransaction = ({
         };
       });
 
-      console.log("Election Data Parsed: ", electionDataParsed);
       return electionDataParsed[0];
+    }, []
+  );
+
+  const getRegisteredVoters = useCallback(
+    async ({ electionId }: any) => {
+      if (!electionId) return [];
+      const args = [
+        new BigUIntValue(electionId)
+      ];
+
+      const registeredVotersQuery = await smartContract.methodsExplicit
+        .getRegisteredVoters(args)
+        .buildQuery();
+
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
+      let queryResponse = await proxyNetworkProvider.queryContract(registeredVotersQuery);
+      let registeredVotersRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getRegisteredVoters'));
+
+      const registeredVoters = registeredVotersRes.values.map((value: any) => {
+        if (!value) return null;
+
+        return {
+          election_id: electionId,
+          voter_address: value.valueOf()
+        };
+      });
+
+      return registeredVoters;
     }, []
   );
 
@@ -367,12 +386,20 @@ export const useSendElectionTransaction = ({
           name: disputeFields.get('name')?.value.toString() ?? '',
           description: disputeFields.get('description')?.value.toString() ?? '',
           creator: disputeFields.get('creator')?.value.toString() ?? '',
-          // resolved: disputeFields.get('resolved')?.value.toBoolean() ?? false,
-          // result_adjusted: disputeFields.get('result_adjusted')?.value.toBoolean() ?? false
+          resolved: disputeFields.get('resolved')?.value.valueOf() ?? false,
+          result_adjusted: disputeFields.get('result_adjusted')?.value.valueOf() ?? false
         };
       }) ?? [];
 
       return disputeData[0];
+    }, []
+  );
+
+  const getDisputes = useCallback(
+    async ({ electionId }: any) => {
+      const disputeIds = await getDisputeIDList({ electionId });
+      const disputes = await Promise.all(disputeIds.map(disputeId => getDispute(electionId, disputeId)));
+      return disputes;
     }, []
   );
 
@@ -634,6 +661,8 @@ export const useSendElectionTransaction = ({
     }, []
   );
 
+
+
   return {
     getElectionIdList,
     getCandidateFee,
@@ -654,6 +683,8 @@ export const useSendElectionTransaction = ({
     transactionStatus,
     getElectionResults,
     getDispute,
-    resolveDispute
+    resolveDispute,
+    getRegisteredVoters,
+    getDisputes
   };
 };
