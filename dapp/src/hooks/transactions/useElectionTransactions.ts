@@ -210,6 +210,30 @@ export const useSendElectionTransaction = ({
     }, []
   );
 
+
+  const getVotes = useCallback(
+    async ({ electionId }: any) => {
+      if (!electionId) return [];
+      const args = [
+        new BigUIntValue(electionId)
+      ];
+
+      const votes = await smartContract.methodsExplicit
+        .getVotes(args)
+        .buildQuery();
+
+      const proxyNetworkProvider = new ProxyNetworkProvider(GATEWAY_URL);
+      let queryResponse = await proxyNetworkProvider.queryContract(votes);
+      let votesRes = new ResultsParser().parseQueryResponse(queryResponse, smartContract.getEndpoint('getVotes'));
+
+      const mappedVotes = votesRes.values.map((value: any) => {
+        if (!value) return null;
+        return value.valueOf();
+      });
+      return mappedVotes;
+    }, []
+  );
+
   const getCandidate = useCallback(
     async ({ electionId, candidateId }: any) => {
       const candidateDetails: TypedValue[] = [
@@ -689,6 +713,7 @@ export const useSendElectionTransaction = ({
     getDispute,
     resolveDispute,
     getRegisteredVoters,
-    getDisputes
+    getDisputes,
+    getVotes
   };
 };

@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { GATEWAY_URL } from 'config';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
 import { SessionEnum } from 'localConstants';
@@ -12,6 +10,7 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
   const [registeredCandidates, setRegisteredCandidates] = useState<any[]>([]);
   const [voters, setVoters] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
+  const [votes, setVotes] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -21,7 +20,8 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
     getPotentialCandidates,
     getCandidates,
     getRegisteredVoters,
-    getDisputes
+    getDisputes,
+    getVotes
   } = useSendElectionTransaction({
     type: SessionEnum.abiElectionSessionId
   });
@@ -43,6 +43,9 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
 
       const disputesList = await Promise.all(electionList.map(election => getDisputes({ electionId: election?.id })));
       setDisputes(disputesList.flat());
+
+      const votesList = await Promise.all(electionList.map(election => getVotes({ electionId: election?.id })));
+      setVotes(votesList.flat());
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Failed to fetch data. Please try again.');
@@ -86,6 +89,10 @@ export const Explorer = ({ callbackRoute }: WidgetProps) => {
         <div className='rounded-md'>
           <h3 className='font-semibold mb-2'>Disputes</h3>
           <pre>{JSON.stringify(disputes, null, 2)}</pre>
+        </div>
+        <div className='rounded-md'>
+          <h3 className='font-semibold mb-2'>Votes</h3>
+          <pre>{JSON.stringify(votes, null, 2)}</pre>
         </div>
       </OutputContainer>
     </div>
