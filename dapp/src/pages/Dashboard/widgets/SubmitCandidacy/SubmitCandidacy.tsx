@@ -114,16 +114,7 @@ export const SubmitCandidacy = ({ callbackRoute }: WidgetProps) => {
           <div className='flex flex-col gap-2'>
             <Label className='font-semibold'>Election Details</Label>
             <div className='p-2 border border-gray-300 rounded-md'>
-              <p><strong>Name:</strong> {electionDetails.name}</p>
-              <p><strong>Description:</strong> {electionDetails.description}</p>
-              <p><strong>Start Time:</strong> {new Date(electionDetails.start_time).toLocaleString()}</p>
-              <p><strong>End Time:</strong> {new Date(electionDetails.end_time).toLocaleString()}</p>
-              <p><strong>Type:</strong> {electionDetails.election_type}</p>
-              <p><strong>Ended:</strong> {electionDetails.ended ? 'Yes' : 'No'}</p>
-              <p><strong>Admin:</strong> {electionDetails.admin}</p>
-              {isElectionStarted && (
-                <p className='text-orange-500'><strong>Note:</strong> This election has already started.</p>
-              )}
+              <pre>{JSON.stringify(electionDetails, null, 2)}</pre>
             </div>
           </div>
         )}
