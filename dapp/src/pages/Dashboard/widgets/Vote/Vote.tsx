@@ -3,7 +3,7 @@ import { Button } from 'components/Button';
 import { Label } from 'components/Label';
 import { WidgetProps } from 'types';
 import { OutputContainer } from 'components';
-import { Candidate, useSendElectionTransaction } from 'hooks';
+import { Candidate, ElectionType, useSendElectionTransaction } from 'hooks';
 import { SessionEnum } from 'localConstants';
 import { BigIntValue, U16Value } from '@multiversx/sdk-core/out';
 
@@ -15,6 +15,7 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [electionInfo, setElectionInfo] = useState<any>(null);
+  const [electionType, setElectionType] = useState<ElectionType>('Approval');
 
   const {
     getElectionIdList,
@@ -60,11 +61,13 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
         try {
           const info = await getElectionData({ electionId });
           setElectionInfo(info);
+          setElectionType(info?.election_type || 'Approval');
         } catch (error) {
           console.error('Error fetching election info:', error);
         }
       } else {
         setElectionInfo(null);
+        setElectionType('Approval');
       }
     };
 
@@ -88,11 +91,15 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
   };
 
   const handleCandidateSelection = (candidateId: number) => {
-    setSelectedCandidates((prevSelected) =>
-      prevSelected.includes(candidateId)
-        ? prevSelected.filter((id) => id !== candidateId)
-        : [...prevSelected, candidateId]
-    );
+    if (electionType === 'Plurality') {
+      setSelectedCandidates([candidateId]);
+    } else {
+      setSelectedCandidates((prevSelected) =>
+        prevSelected.includes(candidateId)
+          ? prevSelected.filter((id) => id !== candidateId)
+          : [...prevSelected, candidateId]
+      );
+    }
   };
 
   return (
@@ -125,7 +132,7 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
           {candidates.map((candidate) => (
             <div key={candidate.id} className='flex items-center gap-2'>
               <input
-                type='checkbox'
+                type={electionType === 'Plurality' ? 'radio' : 'checkbox'}
                 id={`candidate-${candidate.id}`}
                 checked={selectedCandidates.includes(candidate.id)}
                 onChange={() => handleCandidateSelection(candidate.id)}
