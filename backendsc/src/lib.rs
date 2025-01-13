@@ -355,6 +355,7 @@ pub trait BackendSc {
             _ => ElectionType::Plurality
         };
         let election_data = ElectionData {
+            id: election_id,
             name,
             description,
             election_type: election_type,
@@ -394,6 +395,7 @@ pub trait BackendSc {
 
         let candidate_id = self.generate_candidate_id(election_id);
         let candidate = Candidate {
+            id: candidate_id,
             name,
             description,
             creator: self.blockchain().get_caller(),
@@ -504,14 +506,17 @@ pub trait BackendSc {
         require!(dispute_name.len() <= 50, "Name cannot be longer than 50 characters");
         require!(dispute_description.len() > 0, "Description cannot be empty");
         require!(dispute_description.len() <= 200, "Description cannot be longer than 200 characters");
+
+        let dispute_id = self.generate_dispute_id(election_id);
+
         let dispute = Dispute {
+            id: dispute_id,
             name: dispute_name,
             description: dispute_description,
             creator: self.blockchain().get_caller(),
             resolved: false,
             result_adjusted: false
         };
-        let dispute_id = self.generate_dispute_id(election_id);
         self.dispute_id_list(election_id).insert(dispute_id);
         self.dispute(election_id, dispute_id).set(&dispute);
         return dispute_id;

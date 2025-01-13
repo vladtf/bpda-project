@@ -1,18 +1,6 @@
 use multiversx_sc::imports::*;
 use multiversx_sc::derive_imports::*;
 
-// Example structure:
-// elections[electionId] = {
-//   "name": "...",
-//   "description": "...",
-//   "start_time": "...",
-//   "end_time": "...",
-//   "threshold": N,
-//   "status": "ongoing" or "ended",
-//   "admin": "some_admin_addr"
-// }
-
-
 #[type_abi]
 #[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, PartialEq, Debug)]
 pub enum ElectionType {
@@ -44,6 +32,7 @@ pub type DisputeID = u16;
 #[type_abi]
 #[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, Debug)]
 pub struct ElectionData<M: ManagedTypeApi> {
+    pub id: ElectionID,
     pub name: ManagedBuffer<M>,
     pub description: ManagedBuffer<M>,
     pub start_time: u64,
@@ -63,6 +52,7 @@ pub struct Vote<M: ManagedTypeApi> {
 #[type_abi]
 #[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem, Debug)]
 pub struct Candidate<M: ManagedTypeApi> {
+    pub id: CandidateID,
     pub name: ManagedBuffer<M>,
     pub description: ManagedBuffer<M>,
     pub creator: ManagedAddress<M>,
@@ -73,6 +63,7 @@ pub struct Candidate<M: ManagedTypeApi> {
 #[type_abi]
 #[derive(TopEncode, TopDecode, Default, NestedDecode, NestedEncode, ManagedVecItem, Debug)]
 pub struct Dispute<M: ManagedTypeApi> {
+    pub id: DisputeID,
     pub name: ManagedBuffer<M>,
     pub description: ManagedBuffer<M>,
     pub creator: ManagedAddress<M>,
