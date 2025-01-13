@@ -278,7 +278,7 @@ export const useSendElectionTransaction = ({
         const election_type = electionData.get('election_type')?.value.valueOf().name as ElectionType;
 
         return {
-          id: electionId,
+          id: electionData.get('id')?.value.toString(),
           name: electionData.get('name')?.value.toString(),
           description: electionData.get('description')?.value.toString(),
           start_time: start_time,
@@ -377,13 +377,13 @@ export const useSendElectionTransaction = ({
   );
 
   const registerElection = useCallback(
-    async ({ name, description, start_time, end_time }: any) => {
+    async ({ name, description, election_type, start_time, end_time }: any) => {
       clearAllTransactions();
 
       const electionDetails: TypedValue[] = [
         new StringValue(name),
         new StringValue(description),
-        new BigIntValue(0),
+        new BigIntValue(election_type),
         new BigUIntValue(start_time / 1000),
         new BigUIntValue(end_time / 1000)
       ];

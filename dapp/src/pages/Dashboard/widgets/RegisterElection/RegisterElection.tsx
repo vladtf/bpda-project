@@ -11,6 +11,7 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
   const [description, setDescription] = useState<string>('');
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
+  const [electionType, setElectionType] = useState<number>(1);
   const [response, setResponse] = useState<any>(null);
 
   const {
@@ -25,8 +26,9 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
       const res = await registerElection({
         name,
         description,
+        election_type: electionType,
         start_time: new Date(startTime).getTime(),
-        end_time: new Date(endTime).getTime() ,
+        end_time: new Date(endTime).getTime(),
       });
 
       setResponse(res);
@@ -85,6 +87,19 @@ export const RegisterElection = ({ callbackRoute }: WidgetProps) => {
             className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
           />
+        </div>
+        <div className='flex flex-col gap-2'>
+          <Label>Election Type</Label>
+          <select
+            value={electionType}
+            onChange={(e) => setElectionType(e.target.value)}
+            className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            required
+          >
+            <option value='0'>Plurality</option>
+            <option value='1'>Approval</option>
+            <option value='2'>Single Transferable Vote</option>
+          </select>
         </div>
         <div className='flex flex-row gap-2'>
           <Button type='button' onClick={() => setPredefinedPeriod(3)} className='bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600'>

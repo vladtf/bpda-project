@@ -468,6 +468,10 @@
             "type": "struct",
             "fields": [
                 {
+                    "name": "id",
+                    "type": "u16"
+                },
+                {
                     "name": "name",
                     "type": "bytes"
                 },
@@ -484,6 +488,10 @@
         "Dispute": {
             "type": "struct",
             "fields": [
+                {
+                    "name": "id",
+                    "type": "u16"
+                },
                 {
                     "name": "name",
                     "type": "bytes"
@@ -509,6 +517,10 @@
         "ElectionData": {
             "type": "struct",
             "fields": [
+                {
+                    "name": "id",
+                    "type": "u64"
+                },
                 {
                     "name": "name",
                     "type": "bytes"
