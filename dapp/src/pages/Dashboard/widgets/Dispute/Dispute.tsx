@@ -51,9 +51,9 @@ export const Dispute = ({ callbackRoute }: WidgetProps) => {
 
   return (
     <div className='flex flex-col gap-6'>
-      <form onSubmit={handleDispute} className='flex flex-col gap-4 p-4 bg-white shadow-md rounded-md'>
+      <form onSubmit={handleDispute} className='flex flex-col gap-4 p-6 bg-white shadow-lg rounded-lg'>
         <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Election ID</Label>
+          <Label className='font-semibold text-lg'>Election ID</Label>
           <select
             value={electionId}
             onChange={(e) => setElectionId(e.target.value)}
@@ -69,16 +69,16 @@ export const Dispute = ({ callbackRoute }: WidgetProps) => {
           </select>
         </div>
         <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Dispute Name</Label>
+          <Label className='font-semibold text-lg'>Dispute Name</Label>
           <input
             value={disputeName}
             onChange={(e) => setDisputeName(e.target.value)}
-            className='input border border-gray-300 rounded-md'
+            className='input border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
             required
           />
         </div>
         <div className='flex flex-col gap-2'>
-          <Label className='font-semibold'>Dispute Description</Label>
+          <Label className='font-semibold text-lg'>Dispute Description</Label>
           <textarea
             value={disputeDescription}
             onChange={(e) => setDisputeDescription(e.target.value)}
@@ -86,15 +86,15 @@ export const Dispute = ({ callbackRoute }: WidgetProps) => {
             required
           />
         </div>
-        <Button type='submit' className='mt-4 bg-orange-500 text-white p-2 rounded-md hover:bg-orange-600'>
+        <Button type='submit' className='mt-4 bg-orange-500 text-white p-3 rounded-md hover:bg-orange-600'>
           File Dispute
         </Button>
       </form>
       <OutputContainer>
         {response && (
-          <div className='rounded-md'>
-            <h3 className='font-semibold mb-2'>Response</h3>
-            <pre>{JSON.stringify(response, null, 2)}</pre>
+          <div className='rounded-md p-4 bg-gray-100'>
+            <h3 className='font-semibold mb-2 text-lg'>Response</h3>
+            <pre className='bg-white p-2 rounded-md'>{JSON.stringify(response, null, 2)}</pre>
           </div>
         )}
       </OutputContainer>
