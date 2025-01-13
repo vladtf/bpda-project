@@ -228,7 +228,7 @@ export const useSendElectionTransaction = ({
         return {
           name: candidateData.get('name')?.value.toString() ?? '',
           description: candidateData.get('description')?.value.toString() ?? '',
-          creator: candidateData.get('creator')?.value.toString() ?? '',
+          creator: candidateData.get('creator')?.value.valueOf() ?? '',
           id: candidateId,
           election_id: electionId
         };
@@ -277,7 +277,7 @@ export const useSendElectionTransaction = ({
           end_time: end_time,
           election_type: election_type,
           ended: electionData.get('ended')?.value.valueOf(),
-          admin: electionData.get('admin')?.value.toString()
+          admin: electionData.get('admin')?.value.valueOf(),
         };
       });
 
@@ -385,7 +385,7 @@ export const useSendElectionTransaction = ({
         return {
           name: disputeFields.get('name')?.value.toString() ?? '',
           description: disputeFields.get('description')?.value.toString() ?? '',
-          creator: disputeFields.get('creator')?.value.toString() ?? '',
+          creator: disputeFields.get('creator')?.value.valueOf() ?? '',
           resolved: disputeFields.get('resolved')?.value.valueOf() ?? false,
           result_adjusted: disputeFields.get('result_adjusted')?.value.valueOf() ?? false
         };
