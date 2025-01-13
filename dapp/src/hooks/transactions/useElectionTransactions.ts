@@ -26,6 +26,8 @@ export type Candidate = {
 };
 
 export type Dispute = {
+  id: string;
+  election_id: string;
   name: string;
   description: string;
   creator: string;
@@ -147,7 +149,7 @@ export const useSendElectionTransaction = ({
     }, []
   );
 
-  
+
 
   const getPotentialCandidates = useCallback(
     async ({ electionId }: any) => {
@@ -383,11 +385,13 @@ export const useSendElectionTransaction = ({
       const disputeData: Dispute[] = disputeRes.values.map((value: any) => {
         const disputeFields: Map<string, Field> = value.fieldsByName;
         return {
+          id: disputeId ?? '',
+          election_id: electionId ?? '',
           name: disputeFields.get('name')?.value.toString() ?? '',
           description: disputeFields.get('description')?.value.toString() ?? '',
           creator: disputeFields.get('creator')?.value.valueOf() ?? '',
           resolved: disputeFields.get('resolved')?.value.valueOf() ?? false,
-          result_adjusted: disputeFields.get('result_adjusted')?.value.valueOf() ?? false
+          result_adjusted: disputeFields.get('result_adjusted')?.value.valueOf() ?? false,
         };
       }) ?? [];
 

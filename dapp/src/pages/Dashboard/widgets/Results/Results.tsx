@@ -66,10 +66,10 @@ export const Results = ({ callbackRoute }: WidgetProps) => {
       </form>
       <OutputContainer>
         {candidate && (
-          <div className='rounded-md'>
-            <h3 className='font-semibold mb-2'>Election Results</h3>
+            <div className='rounded-md bg-yellow-300 p-4'>
+            <h3 className='font-semibold mb-2'>Winner</h3>
             <pre>{JSON.stringify(candidate, null, 2)}</pre>
-          </div>
+            </div>
         )}
         {error && (
           <div className='rounded-md text-red-500'>

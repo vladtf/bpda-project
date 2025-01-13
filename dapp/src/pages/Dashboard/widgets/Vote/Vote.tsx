@@ -14,11 +14,13 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
   const [elections, setElections] = useState<string[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [electionInfo, setElectionInfo] = useState<any>(null);
 
   const {
     getElectionIdList,
     getCandidates,
-    vote
+    vote,
+    getElectionData,
   } = useSendElectionTransaction({
     type: SessionEnum.abiElectionSessionId
   });
@@ -50,6 +52,23 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
     };
 
     fetchCandidates();
+  }, [electionId]);
+
+  useEffect(() => {
+    const fetchElectionInfo = async () => {
+      if (electionId) {
+        try {
+          const info = await getElectionData({ electionId });
+          setElectionInfo(info);
+        } catch (error) {
+          console.error('Error fetching election info:', error);
+        }
+      } else {
+        setElectionInfo(null);
+      }
+    };
+
+    fetchElectionInfo();
   }, [electionId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,6 +114,12 @@ export const Vote = ({ callbackRoute }: WidgetProps) => {
             ))}
           </select>
         </div>
+        {electionInfo && (
+          <div className='flex flex-col gap-2'>
+            <Label className='font-semibold'>Election Information</Label>
+            <pre className='bg-gray-100 p-2 rounded-md'>{JSON.stringify(electionInfo, null, 2)}</pre>
+          </div>
+        )}
         <div className='flex flex-col gap-2'>
           <Label className='font-semibold'>Candidates</Label>
           {candidates.map((candidate) => (
